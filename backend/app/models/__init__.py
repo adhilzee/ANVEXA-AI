@@ -1,0 +1,86 @@
+"""SQLAlchemy entities used by the application and Alembic."""
+
+from backend.app.models.audit import AuditLog, UserFeedback
+from backend.app.models.document import (
+    Claim,
+    ClaimCitation,
+    Citation,
+    Document,
+    DocumentPage,
+    DocumentVersion,
+)
+from backend.app.models.enums import (
+    CitationStyle,
+    ClaimType,
+    ConfidenceLabel,
+    DocumentStatus,
+    EvidenceRelation,
+    ExtractionStatus,
+    IssueCertainty,
+    ProcessingJobType,
+    ProcessingStatus,
+    ReferenceIssueType,
+    ReportFormat,
+    RetrievalStatus,
+    ReviewAction,
+    SourceVersionType,
+    UserRole,
+    Verdict,
+    VerificationStatus,
+)
+from backend.app.models.refresh_token import RefreshToken
+from backend.app.models.research import (
+    Embedding,
+    EvidencePassage,
+    ResearchSource,
+    SourceVersion,
+)
+from backend.app.models.user import User
+from backend.app.models.verification import (
+    ProcessingJob,
+    ReferenceIssue,
+    Report,
+    ReviewHistory,
+    VerificationEvidence,
+    VerificationResult,
+)
+
+__all__ = [
+    "AuditLog",
+    "Citation",
+    "CitationStyle",
+    "Claim",
+    "ClaimCitation",
+    "ClaimType",
+    "ConfidenceLabel",
+    "Document",
+    "DocumentPage",
+    "DocumentStatus",
+    "DocumentVersion",
+    "Embedding",
+    "EvidencePassage",
+    "EvidenceRelation",
+    "ExtractionStatus",
+    "IssueCertainty",
+    "ProcessingJob",
+    "ProcessingJobType",
+    "ProcessingStatus",
+    "RefreshToken",
+    "ReferenceIssue",
+    "ReferenceIssueType",
+    "Report",
+    "ReportFormat",
+    "RetrievalStatus",
+    "ResearchSource",
+    "ReviewAction",
+    "ReviewHistory",
+    "SourceVersion",
+    "SourceVersionType",
+    "User",
+    "UserFeedback",
+    "UserRole",
+    "Verdict",
+    "VerificationStatus",
+    "VerificationEvidence",
+    "VerificationResult",
+]
