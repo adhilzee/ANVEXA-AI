@@ -468,6 +468,147 @@
       overflow-wrap: anywhere;
     }
 
+    /* Recent Verified Files Section */
+    .recent-files-container {
+      padding: clamp(0.75rem, 2vw, 1.25rem);
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+      margin-top: 1.25rem;
+      margin-bottom: 1.5rem;
+      width: 100%;
+      min-width: 0;
+    }
+    .recent-files-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      min-width: 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 0.5rem;
+    }
+    .recent-files-title {
+      font-weight: 600;
+      color: #38bdf8;
+      font-size: 0.95rem;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .recent-files-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+    .recent-files-status-msg {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      padding: 1rem;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+    .recent-files-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      width: 100%;
+      min-width: 0;
+    }
+    .recent-file-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #1e293b;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      border: 1px solid #334155;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      width: 100%;
+      min-width: 0;
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+    .recent-file-item:hover {
+      border-color: #4f46e5;
+      background-color: #1a2234;
+    }
+    .recent-file-info {
+      min-width: 0;
+      flex: 1 1 55%;
+    }
+    .recent-file-name {
+      font-weight: 600;
+      color: #fff;
+      font-size: 0.9rem;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      line-height: 1.35;
+    }
+    .recent-file-meta {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.3rem;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      min-width: 0;
+    }
+    .recent-file-actions {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      flex-shrink: 0;
+      min-width: 0;
+    }
+    .recent-btn-open {
+      background: linear-gradient(135deg, #4f46e5, #4338ca);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0.45rem 0.85rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      min-height: 38px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .recent-btn-open:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }
+    .recent-btn-delete {
+      background: rgba(239, 68, 68, 0.12);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 6px;
+      padding: 0.45rem 0.7rem;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      min-height: 38px;
+      transition: all 0.2s;
+    }
+    .recent-btn-delete:hover {
+      background: rgba(239, 68, 68, 0.22);
+      border-color: #ef4444;
+      color: #fca5a5;
+    }
+
     /* Pipeline Status Progress Card */
     .pipeline-status-card {
       background: #0f172a;
@@ -884,6 +1025,7 @@
     .header-container, .logo-group, .header-user, .header-left, .header-right,
     .file-preview-card, .file-preview-inner, .file-preview-details, .file-preview-meta, .file-preview-actions,
     .demo-samples-container, .demo-samples-header, .demo-samples-list, .sample-paper-item, .sample-paper-info,
+    .recent-files-container, .recent-files-header, .recent-files-list, .recent-file-item, .recent-file-info, .recent-file-actions,
     .pipeline-status-card, .pipeline-status-header, .report-active-card, .reports-actions-row,
     .pwa-modal-card, .pwa-modal-header, .pwa-modal-body, .pwa-platform-card,
     .issue-alert, .upload-dropzone, .nav-tabs, .tab-btn {
@@ -896,6 +1038,7 @@
     .passage-rationale-note, .issue-alert, .badge, .btn, .btn-pill, .ev-badge-btn,
     .hero h1, .hero p, .platform-title, #selected-filename,
     .file-preview-card, .sample-paper-item, .pwa-step-list li,
+    .recent-file-name, .recent-file-meta, .recent-btn-open, .recent-btn-delete,
     #report-active-title, #pipeline-step-text, #pipeline-subtext {
       word-break: break-word;
       overflow-wrap: anywhere;
@@ -1208,6 +1351,37 @@
       }
       .sample-paper-item .btn-pill {
         width: 100% !important;
+        min-height: 44px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 0.84rem !important;
+        white-space: normal !important;
+        text-align: center !important;
+      }
+
+      /* Recent Verified Files Mobile */
+      .recent-files-container {
+        padding: 0.85rem 0.75rem;
+      }
+      .recent-files-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.35rem;
+      }
+      .recent-file-item {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.65rem !important;
+        padding: 0.75rem 0.65rem;
+      }
+      .recent-file-actions {
+        width: 100% !important;
+        display: grid !important;
+        grid-template-columns: 1fr auto !important;
+        gap: 0.5rem !important;
+      }
+      .recent-btn-open, .recent-btn-delete {
         min-height: 44px !important;
         display: flex !important;
         align-items: center !important;
@@ -1688,6 +1862,28 @@
           </div>
         </div>
 
+        <!-- RECENT VERIFIED FILES (DOCUMENT HISTORY) -->
+        <div class="recent-files-container" id="recent-files-container">
+          <div class="recent-files-header">
+            <div class="recent-files-title">
+              🕒 Recent Verified Files:
+            </div>
+            <div class="recent-files-subtitle">Revisit & manage previously audited papers</div>
+          </div>
+
+          <div id="recent-files-loading" class="recent-files-status-msg">
+            <span style="display: inline-block; margin-right: 0.35rem;">⏳</span> Loading verification history...
+          </div>
+
+          <div id="recent-files-empty" class="recent-files-status-msg" style="display: none;">
+            No verified documents found yet. Upload a manuscript or select one of the demo samples above to begin!
+          </div>
+
+          <div class="recent-files-list" id="recent-files-list">
+            <!-- Dynamically populated via fetchRecentDocuments() -->
+          </div>
+        </div>
+
         <!-- PIPELINE EXECUTION PROGRESS CARD -->
         <div id="pipeline-status-card" class="pipeline-status-card" style="display: none;">
           <div class="pipeline-status-header">
@@ -1960,32 +2156,39 @@
         body: formData
       });
 
-      // Handle duplicate uploads gracefully by triggering fresh verification with current classifier
+      // Handle duplicate uploads gracefully by extracting existing_document_id and loading saved report
       if (uploadResp.status === 409) {
-        progressBar.style.width = '60%';
-        percentBadge.innerText = '60%';
-        stepText.innerText = `"${displayName}" previously indexed. Re-verifying with latest classifier...`;
-        subText.innerText = 'Regenerating verification verdicts and evidence rationale...';
+        const dupData = await uploadResp.json().catch(() => ({}));
+        const existingId = dupData.existing_document_id ||
+          uploadResp.headers.get('x-existing-document-id') ||
+          (typeof dupData.detail === 'string' && dupData.detail.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)?.[0]);
 
-        const docsResp = await fetch('/api/v1/documents', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const docsData = await docsResp.json();
-        const existingDoc = docsData.documents.find(d => d.filename === displayName) || docsData.documents[0];
-        if (existingDoc) {
-          currentDocId = existingDoc.id;
-          
-          // Re-run verification to ensure results are generated with the latest classifier logic
-          await fetch(`/api/v1/documents/${currentDocId}/verify`, {
-            method: 'POST',
+        let targetId = existingId;
+        if (!targetId) {
+          const docsResp = await fetch('/api/v1/documents?limit=8', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
+          if (docsResp.ok) {
+            const docsData = await docsResp.json();
+            const found = docsData.documents && (docsData.documents.find(d => d.filename === displayName) || docsData.documents[0]);
+            if (found) targetId = found.id;
+          }
+        }
+
+        if (targetId) {
+          currentDocId = targetId;
+          currentDocName = displayName;
+          const repEl = document.getElementById('report-active-title');
+          if (repEl) repEl.innerText = displayName;
 
           progressBar.style.width = '100%';
           percentBadge.innerText = '100%';
-          stepText.innerText = `✓ Fresh verification complete for "${existingDoc.filename}"!`;
+          stepText.innerText = `✓ Loaded verified report for "${displayName}"`;
           subText.innerText = 'Summary metrics and evidence rationale loaded below.';
+
+          showToast('Loaded previously verified report for this file', 'info');
           await loadVerificationData(currentDocId, token);
+          await fetchRecentDocuments();
           return;
         }
       }
@@ -1998,6 +2201,9 @@
 
       const docData = await uploadResp.json();
       currentDocId = docData.id;
+      currentDocName = displayName;
+      const repEl = document.getElementById('report-active-title');
+      if (repEl) repEl.innerText = displayName;
 
       // Stage 2: Claims & Citations
       progressBar.style.width = '50%';
@@ -2029,6 +2235,8 @@
 
       // Load results
       await loadVerificationData(currentDocId, token);
+      await fetchRecentDocuments();
+      showToast(`Verification complete for "${displayName}"`, 'success');
     }
 
     // Load full verification data into dashboard cards and tabs
@@ -2456,6 +2664,226 @@
     }
 
     // ==========================================
+    // Toast Notification System
+    // ==========================================
+    function showToast(message, type = 'info') {
+      let container = document.getElementById('toast-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.style.cssText = `
+          position: fixed;
+          bottom: 24px;
+          right: 24px;
+          z-index: 99999;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          max-width: calc(100vw - 32px);
+          pointer-events: none;
+        `;
+        document.body.appendChild(container);
+      }
+
+      const toast = document.createElement('div');
+      const bg = type === 'success' ? '#065f46' : (type === 'error' ? '#7f1d1d' : (type === 'warning' ? '#78350f' : '#1e1b4b'));
+      const border = type === 'success' ? '#10b981' : (type === 'error' ? '#ef4444' : (type === 'warning' ? '#f59e0b' : '#6366f1'));
+      const icon = type === 'success' ? '✓' : (type === 'error' ? '✕' : (type === 'warning' ? '⚠️' : 'ℹ️'));
+
+      toast.style.cssText = `
+        background: ${bg};
+        border: 1px solid ${border};
+        color: #f8fafc;
+        padding: 12px 18px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        pointer-events: auto;
+        opacity: 0;
+        transform: translateY(12px);
+        transition: opacity 0.25s ease, transform 0.25s ease;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      `;
+      toast.innerHTML = `<span style="font-size: 1.1rem; flex-shrink: 0;">${icon}</span><span>${escapeHtml(message)}</span>`;
+
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateY(0)';
+      });
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(12px)';
+        setTimeout(() => {
+          if (toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 250);
+      }, 3500);
+    }
+
+    // ==========================================
+    // Recent Verified Documents History
+    // ==========================================
+    async function fetchRecentDocuments() {
+      const loadingEl = document.getElementById('recent-files-loading');
+      const emptyEl = document.getElementById('recent-files-empty');
+      const listEl = document.getElementById('recent-files-list');
+      if (!listEl) return;
+
+      try {
+        const token = await ensureAuth();
+        const resp = await fetch('/api/v1/documents?limit=8', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (loadingEl) loadingEl.style.display = 'none';
+
+        if (!resp.ok) {
+          if (emptyEl) {
+            emptyEl.innerText = 'Unable to load recent files history.';
+            emptyEl.style.display = 'block';
+          }
+          return;
+        }
+
+        const data = await resp.json();
+        const docs = data.documents || [];
+
+        if (docs.length === 0) {
+          if (emptyEl) {
+            emptyEl.innerText = 'No verified documents found yet. Upload a manuscript or select one of the demo samples above to begin!';
+            emptyEl.style.display = 'block';
+          }
+          listEl.innerHTML = '';
+          return;
+        }
+
+        if (emptyEl) emptyEl.style.display = 'none';
+
+        listEl.innerHTML = docs.map(doc => {
+          const filename = escapeHtml(doc.filename || doc.title || 'Untitled Document');
+          const score = typeof doc.verification_score === 'number' ? doc.verification_score.toFixed(0) : '0';
+          const statusRaw = (doc.status || doc.processing_status || 'uploaded').toUpperCase();
+          const statusText = statusRaw === 'COMPLETED' ? 'VERIFIED' : statusRaw;
+
+          const badgeColor = statusText === 'VERIFIED' ? 'rgba(16, 185, 129, 0.18)' : 'rgba(99, 102, 241, 0.18)';
+          const badgeBorder = statusText === 'VERIFIED' ? 'rgba(16, 185, 129, 0.4)' : 'rgba(99, 102, 241, 0.4)';
+          const badgeTextColor = statusText === 'VERIFIED' ? '#34d399' : '#a5b4fc';
+
+          let dateStr = '';
+          if (doc.created_at || doc.uploaded_at) {
+            try {
+              const d = new Date(doc.created_at || doc.uploaded_at);
+              dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            } catch (e) {}
+          }
+
+          const totalClaims = doc.total_claims || 0;
+
+          return `
+            <div class="recent-file-item" id="recent-doc-${doc.id}">
+              <div class="recent-file-info">
+                <div class="recent-file-name" title="${filename}">
+                  📄 ${filename}
+                </div>
+                <div class="recent-file-meta">
+                  <span class="badge" style="background: ${badgeColor}; border: 1px solid ${badgeBorder}; color: ${badgeTextColor}; font-size: 0.72rem; padding: 2px 7px;">
+                    ${statusText} • ${score}%
+                  </span>
+                  <span>•</span>
+                  <span>${totalClaims} Claims</span>
+                  ${dateStr ? `<span>•</span><span>${dateStr}</span>` : ''}
+                </div>
+              </div>
+              <div class="recent-file-actions">
+                <button class="recent-btn-open" onclick="openRecentDocument('${doc.id}', '${encodeURIComponent(doc.filename || doc.title || '')}')">
+                  📂 Open
+                </button>
+                <button class="recent-btn-delete" onclick="deleteRecentDocument('${doc.id}', '${encodeURIComponent(doc.filename || doc.title || '')}')" title="Delete document">
+                  🗑️ Delete
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+      } catch (err) {
+        console.error('Error fetching recent documents:', err);
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (emptyEl) {
+          emptyEl.innerText = 'Unable to connect to verification history.';
+          emptyEl.style.display = 'block';
+        }
+      }
+    }
+
+    async function openRecentDocument(docId, encodedName) {
+      const filename = decodeURIComponent(encodedName || '') || 'Selected Document';
+      try {
+        const token = await ensureAuth();
+        currentDocId = docId;
+        currentDocName = filename;
+
+        // Update Report Active Document in Tab 4
+        const repEl = document.getElementById('report-active-title');
+        if (repEl) repEl.innerText = filename;
+
+        // Load full verification data
+        await loadVerificationData(docId, token);
+
+        // Switch to Tab 2 (Claims & Evidence) so user immediately sees results
+        switchTab('tab-claims');
+
+        showToast(`Loaded verification report for "${filename}"`, 'success');
+      } catch (err) {
+        console.error('Error opening document:', err);
+        alert('Failed to load document report.');
+      }
+    }
+
+    async function deleteRecentDocument(docId, encodedName) {
+      const filename = decodeURIComponent(encodedName || '') || 'this document';
+      const confirmed = confirm(`Are you sure you want to permanently delete "${filename}" and all its verification audit data?`);
+      if (!confirmed) return;
+
+      try {
+        const token = await ensureAuth();
+        const resp = await fetch(`/api/v1/documents/${docId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          alert(`Delete error: ${err.detail || 'Could not delete document'}`);
+          return;
+        }
+
+        // If current active document was deleted, reset selection
+        if (currentDocId === docId) {
+          currentDocId = null;
+          currentDocName = null;
+          const repEl = document.getElementById('report-active-title');
+          if (repEl) repEl.innerText = 'No document selected';
+          document.getElementById('verification-summary-section').style.display = 'none';
+          document.getElementById('claims-container').innerHTML = '<p>Select or upload a document to view claims.</p>';
+          document.getElementById('issues-container').innerHTML = '<p>No issues detected.</p>';
+        }
+
+        showToast(`Deleted "${filename}"`, 'info');
+        await fetchRecentDocuments();
+      } catch (err) {
+        console.error('Error deleting document:', err);
+        alert('Failed to delete document.');
+      }
+    }
+
+    // ==========================================
     // Progressive Web App (PWA) Lifecycle & Install
     // ==========================================
     let deferredPwaPrompt = null;
@@ -2500,6 +2928,8 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      fetchRecentDocuments();
+
       const installBtn = document.getElementById('pwa-install-btn');
       if (!installBtn) return;
 

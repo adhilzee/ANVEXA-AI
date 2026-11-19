@@ -2,12 +2,13 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from backend.app.api.router import api_router
 from backend.app.core.config import Settings, get_settings
 from backend.app.core.logging import configure_logging
+from backend.app.services.document_service import DuplicateDocumentError
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -18,6 +19,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         version=app_settings.app_version,
         description="Evidence-traceable academic document verification API.",
     )
+
+    @application.exception_handler(DuplicateDocumentError)
+    def duplicate_document_handler(request, exc: DuplicateDocumentError):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "detail": exc.detail,
+                "existing_document_id": exc.existing_document_id,
+                "status": exc.status,
+            },
+            headers=dict(exc.headers or {}),
+        )
 
     # CORS configuration
     application.add_middleware(

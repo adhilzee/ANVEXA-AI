@@ -12,14 +12,32 @@ from uuid import UUID, uuid4
 
 from fastapi import HTTPException, UploadFile
 from starlette import status
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.app.core.config import Settings, get_settings
-from backend.app.models.document import Document
-from backend.app.models.enums import DocumentStatus
+from backend.app.models.audit import UserFeedback
+from backend.app.models.document import (
+    Claim,
+    ClaimCitation,
+    Citation,
+    Document,
+    DocumentPage,
+    DocumentVersion,
+)
+from backend.app.models.enums import DocumentStatus, Verdict
+from backend.app.models.research import EvidencePassage, ResearchSource
 from backend.app.models.user import User
+from backend.app.models.verification import (
+    ProcessingJob,
+    ReferenceIssue,
+    Report,
+    ReviewHistory,
+    VerificationEvidence,
+    VerificationResult,
+    review_evidence,
+)
 from backend.app.schemas.document import (
     DocumentListResponse,
     DocumentQueryParams,
@@ -144,6 +162,27 @@ def set_storage_backend(backend: StorageBackend) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Exceptions
+# ---------------------------------------------------------------------------
+
+
+class DuplicateDocumentError(HTTPException):
+    """Raised when a file with identical SHA-256 hash already exists for the user."""
+
+    def __init__(self, existing_id: UUID | str, status_value: str = "completed"):
+        super().__init__(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Duplicate document detected. Existing document ID: {existing_id}",
+            headers={
+                "X-Existing-Document-Id": str(existing_id),
+                "X-Existing-Document-Status": str(status_value),
+            },
+        )
+        self.existing_document_id = str(existing_id)
+        self.status = str(status_value)
+
+
+# ---------------------------------------------------------------------------
 # Service functions
 # ---------------------------------------------------------------------------
 
@@ -183,9 +222,14 @@ def upload_document(
         )
     ).scalar_one_or_none()
     if existing is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Duplicate document detected. Existing document ID: {existing.id}",
+        status_val = (
+            existing.processing_status.value
+            if hasattr(existing.processing_status, "value")
+            else str(existing.processing_status)
+        )
+        raise DuplicateDocumentError(
+            existing_id=existing.id,
+            status_value=status_val,
         )
 
     # 7. Generate unique storage key
@@ -230,6 +274,22 @@ def upload_document(
             storage.delete(storage_key)
         except StorageError:
             pass
+        existing_dup = db.execute(
+            select(Document).where(
+                Document.user_id == current_user.id,
+                Document.file_hash == file_hash,
+            )
+        ).scalar_one_or_none()
+        if existing_dup is not None:
+            status_val = (
+                existing_dup.processing_status.value
+                if hasattr(existing_dup.processing_status, "value")
+                else str(existing_dup.processing_status)
+            )
+            raise DuplicateDocumentError(
+                existing_id=existing_dup.id,
+                status_value=status_val,
+            )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Duplicate document detected",
@@ -259,6 +319,7 @@ def upload_document(
         file_size=doc.file_size,
         file_hash=doc.file_hash,
         processing_status=doc.processing_status,
+        status=doc.processing_status.value,
         uploaded_at=doc.uploaded_at,
         message="Document uploaded successfully",
     )
@@ -269,7 +330,7 @@ def list_user_documents(
     params: DocumentQueryParams,
     db: Session,
 ) -> DocumentListResponse:
-    """Return paginated, filtered, searchable document list for the user."""
+    """Return paginated, filtered, searchable document list for the user sorted newest-first."""
     query = select(Document).where(Document.user_id == current_user.id)
 
     # Filters
@@ -284,11 +345,11 @@ def list_user_documents(
     count_query = select(func.count()).select_from(query.subquery())
     total = db.execute(count_query).scalar() or 0
 
-    # Sorting
+    # Sorting: order by created_at desc (newest-first)
     if params.sort_order == "asc":
-        query = query.order_by(Document.uploaded_at.asc())
+        query = query.order_by(Document.created_at.asc(), Document.uploaded_at.asc())
     else:
-        query = query.order_by(Document.uploaded_at.desc())
+        query = query.order_by(Document.created_at.desc(), Document.uploaded_at.desc())
 
     # Pagination
     offset = (params.page - 1) * params.per_page
@@ -297,8 +358,55 @@ def list_user_documents(
     documents = list(db.execute(query).scalars().all())
     total_pages = max(1, math.ceil(total / params.per_page))
 
+    # Enrich document records with verification score and total claims
+    doc_responses: list[DocumentResponse] = []
+    for d in documents:
+        claims_count = 0
+        score = 0.0
+        latest_version = d.versions[-1] if d.versions else None
+        if latest_version:
+            claims_count = db.execute(
+                select(func.count(Claim.id)).where(Claim.document_version_id == latest_version.id)
+            ).scalar() or 0
+
+            results = db.execute(
+                select(VerificationResult).where(
+                    VerificationResult.document_version_id == latest_version.id
+                )
+            ).scalars().all()
+
+            supported_count = sum(
+                1 for r in results if r.verdict in (Verdict.SUPPORTED, Verdict.PARTLY_SUPPORTED)
+            )
+            score = round((supported_count / claims_count * 100.0), 1) if claims_count > 0 else 0.0
+
+        status_val = (
+            d.processing_status.value
+            if hasattr(d.processing_status, "value")
+            else str(d.processing_status)
+        )
+
+        doc_responses.append(
+            DocumentResponse(
+                id=d.id,
+                user_id=d.user_id,
+                title=d.title,
+                filename=d.filename,
+                file_type=d.file_type,
+                file_size=d.file_size,
+                file_hash=d.file_hash,
+                processing_status=d.processing_status,
+                status=status_val,
+                verification_score=score,
+                total_claims=claims_count,
+                uploaded_at=d.uploaded_at,
+                created_at=d.created_at,
+                updated_at=d.updated_at,
+            )
+        )
+
     return DocumentListResponse(
-        documents=[DocumentResponse.model_validate(d) for d in documents],
+        documents=doc_responses,
         pagination=PaginationMeta(
             total=total,
             page=params.page,
@@ -313,7 +421,7 @@ def get_user_document(
     current_user: User,
     db: Session,
 ) -> DocumentResponse:
-    """Retrieve a single document with ownership enforcement."""
+    """Retrieve a single document with ownership enforcement and verification metrics."""
     doc = db.execute(
         select(Document).where(Document.id == document_id)
     ).scalar_one_or_none()
@@ -328,7 +436,47 @@ def get_user_document(
     from backend.app.api.dependencies import verify_resource_ownership
     verify_resource_ownership(doc.user_id, current_user)
 
-    return DocumentResponse.model_validate(doc)
+    claims_count = 0
+    score = 0.0
+    latest_version = doc.versions[-1] if doc.versions else None
+    if latest_version:
+        claims_count = db.execute(
+            select(func.count(Claim.id)).where(Claim.document_version_id == latest_version.id)
+        ).scalar() or 0
+
+        results = db.execute(
+            select(VerificationResult).where(
+                VerificationResult.document_version_id == latest_version.id
+            )
+        ).scalars().all()
+
+        supported_count = sum(
+            1 for r in results if r.verdict in (Verdict.SUPPORTED, Verdict.PARTLY_SUPPORTED)
+        )
+        score = round((supported_count / claims_count * 100.0), 1) if claims_count > 0 else 0.0
+
+    status_val = (
+        doc.processing_status.value
+        if hasattr(doc.processing_status, "value")
+        else str(doc.processing_status)
+    )
+
+    return DocumentResponse(
+        id=doc.id,
+        user_id=doc.user_id,
+        title=doc.title,
+        filename=doc.filename,
+        file_type=doc.file_type,
+        file_size=doc.file_size,
+        file_hash=doc.file_hash,
+        processing_status=doc.processing_status,
+        status=status_val,
+        verification_score=score,
+        total_claims=claims_count,
+        uploaded_at=doc.uploaded_at,
+        created_at=doc.created_at,
+        updated_at=doc.updated_at,
+    )
 
 
 def get_document_status(
@@ -362,7 +510,7 @@ def delete_user_document(
     db: Session,
     settings: Settings | None = None,
 ) -> dict[str, str]:
-    """Delete a document record and its stored file."""
+    """Delete a document record and its stored file, cleanly cascading all related entities."""
     doc = db.execute(
         select(Document).where(Document.id == document_id)
     ).scalar_one_or_none()
@@ -378,18 +526,177 @@ def delete_user_document(
 
     storage_key = doc.storage_path
 
-    # Delete DB record first
-    db.delete(doc)
     try:
-        db.commit()
-    except Exception:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to delete document record",
+        # 1. Gather all DocumentVersion IDs for this document
+        version_ids = list(
+            db.execute(
+                select(DocumentVersion.id).where(DocumentVersion.document_id == document_id)
+            ).scalars().all()
         )
 
-    # Then delete file (best-effort)
+        # 2. Gather all Claim IDs
+        claim_conds = [Claim.document_id == document_id]
+        if version_ids:
+            claim_conds.append(Claim.document_version_id.in_(version_ids))
+        claim_ids = list(
+            db.execute(select(Claim.id).where(or_(*claim_conds))).scalars().all()
+        )
+
+        # 3. Gather all Citation IDs
+        citation_conds = [Citation.document_id == document_id]
+        if version_ids:
+            citation_conds.append(Citation.document_version_id.in_(version_ids))
+        citation_ids = list(
+            db.execute(select(Citation.id).where(or_(*citation_conds))).scalars().all()
+        )
+
+        # 4. Gather all VerificationResult IDs
+        vr_conds = []
+        if claim_ids:
+            vr_conds.append(VerificationResult.claim_id.in_(claim_ids))
+        if version_ids:
+            vr_conds.append(VerificationResult.document_version_id.in_(version_ids))
+        result_ids = []
+        if vr_conds:
+            result_ids = list(
+                db.execute(select(VerificationResult.id).where(or_(*vr_conds))).scalars().all()
+            )
+
+        # 5. Delete UserFeedback (references verification_results.id with RESTRICT and claims.id)
+        uf_conds = []
+        if result_ids:
+            uf_conds.append(UserFeedback.verification_result_id.in_(result_ids))
+        if claim_ids:
+            uf_conds.append(UserFeedback.claim_id.in_(claim_ids))
+        if uf_conds:
+            db.execute(delete(UserFeedback).where(or_(*uf_conds)))
+
+        # 6. Delete ReviewHistory and review_evidence
+        if result_ids:
+            rh_ids = list(
+                db.execute(
+                    select(ReviewHistory.id).where(
+                        ReviewHistory.verification_result_id.in_(result_ids)
+                    )
+                ).scalars().all()
+            )
+            if rh_ids:
+                db.execute(
+                    delete(review_evidence).where(
+                        review_evidence.c.review_id.in_(rh_ids)
+                    )
+                )
+                db.execute(delete(ReviewHistory).where(ReviewHistory.id.in_(rh_ids)))
+
+        # 7. Collect EvidencePassage IDs from VerificationEvidence before deletion
+        evidence_passage_ids: list[UUID] = []
+        if result_ids:
+            evidence_passage_ids = list(
+                db.execute(
+                    select(VerificationEvidence.evidence_passage_id).where(
+                        VerificationEvidence.verification_result_id.in_(result_ids)
+                    )
+                ).scalars().all()
+            )
+            db.execute(
+                delete(VerificationEvidence).where(
+                    VerificationEvidence.verification_result_id.in_(result_ids)
+                )
+            )
+
+        # 8. Delete VerificationResult
+        if result_ids:
+            db.execute(delete(VerificationResult).where(VerificationResult.id.in_(result_ids)))
+
+        # 9. Delete ReferenceIssue
+        if version_ids:
+            db.execute(
+                delete(ReferenceIssue).where(
+                    ReferenceIssue.document_version_id.in_(version_ids)
+                )
+            )
+
+        # 10. Delete ClaimCitation
+        cc_conds = []
+        if claim_ids:
+            cc_conds.append(ClaimCitation.claim_id.in_(claim_ids))
+        if citation_ids:
+            cc_conds.append(ClaimCitation.citation_id.in_(citation_ids))
+        if cc_conds:
+            db.execute(delete(ClaimCitation).where(or_(*cc_conds)))
+
+        # 11. Delete Claim
+        if claim_ids:
+            db.execute(delete(Claim).where(Claim.id.in_(claim_ids)))
+
+        # 12. Delete Citation and collect research_sources
+        source_ids_to_check: list[UUID] = []
+        if citation_ids:
+            source_ids_to_check = [
+                s
+                for s in db.execute(
+                    select(Citation.research_source_id).where(
+                        Citation.id.in_(citation_ids),
+                        Citation.research_source_id.isnot(None),
+                    )
+                ).scalars().all()
+                if s is not None
+            ]
+            db.execute(delete(Citation).where(Citation.id.in_(citation_ids)))
+
+        # 13. Delete DocumentPage
+        if version_ids:
+            db.execute(
+                delete(DocumentPage).where(
+                    DocumentPage.document_version_id.in_(version_ids)
+                )
+            )
+
+        # 14. Delete Report and ProcessingJob
+        db.execute(delete(Report).where(Report.document_id == document_id))
+        db.execute(delete(ProcessingJob).where(ProcessingJob.document_id == document_id))
+
+        # 15. Delete DocumentVersion
+        if version_ids:
+            db.execute(delete(DocumentVersion).where(DocumentVersion.document_id == document_id))
+
+        # 16. Clean unused evidence passages and sources
+        if evidence_passage_ids:
+            used_passages = set(
+                db.execute(
+                    select(VerificationEvidence.evidence_passage_id).where(
+                        VerificationEvidence.evidence_passage_id.in_(evidence_passage_ids)
+                    )
+                ).scalars().all()
+            )
+            unused_pids = [p for p in evidence_passage_ids if p not in used_passages]
+            if unused_pids:
+                db.execute(delete(EvidencePassage).where(EvidencePassage.id.in_(unused_pids)))
+
+        if source_ids_to_check:
+            used_sources = set(
+                db.execute(
+                    select(Citation.research_source_id).where(
+                        Citation.research_source_id.in_(source_ids_to_check)
+                    )
+                ).scalars().all()
+            )
+            unused_sids = [s for s in source_ids_to_check if s not in used_sources]
+            if unused_sids:
+                db.execute(delete(ResearchSource).where(ResearchSource.id.in_(unused_sids)))
+
+        # 17. Delete Document record
+        db.delete(doc)
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        logger.error("Failed to delete document %s: %s", document_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete document record: {str(exc)}",
+        ) from exc
+
+    # 18. Delete file (best-effort)
     if settings is None:
         settings = get_settings()
     storage = get_storage_backend(settings)

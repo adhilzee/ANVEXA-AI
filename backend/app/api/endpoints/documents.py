@@ -54,7 +54,8 @@ def upload(
 )
 def list_documents(
     page: int = Query(default=1, ge=1),
-    per_page: int = Query(default=20, ge=1, le=100),
+    per_page: int = Query(default=8, ge=1, le=100),
+    limit: int | None = Query(default=None, ge=1, le=100, description="Alias for per_page (limits recent document count)"),
     search: str | None = Query(default=None, description="Search by filename"),
     file_type: str | None = Query(default=None, description="Filter by MIME type"),
     doc_status: DocumentStatus | None = Query(
@@ -64,9 +65,11 @@ def list_documents(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    effective_per_page = limit if limit is not None else per_page
     params = DocumentQueryParams(
         page=page,
-        per_page=per_page,
+        per_page=effective_per_page,
+        limit=limit,
         search=search,
         file_type=file_type,
         status=doc_status,

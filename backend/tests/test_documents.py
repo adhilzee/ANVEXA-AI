@@ -784,3 +784,203 @@ def test_document_status_migration_renders_offline() -> None:
     assert "completed" in result.stdout
     assert "validating" in result.stdout
     assert "queued" in result.stdout
+
+
+# ---------------------------------------------------------------------------
+# Recent Documents History, Cascade Deletion & Duplicate Id Tests
+# ---------------------------------------------------------------------------
+
+
+def test_recent_documents_listing_sorting_and_cap(doc_test_client, auth_headers) -> None:
+    """GET /api/v1/documents returns recent documents sorted newest-first defaulting to 8."""
+    # Upload 10 distinct documents
+    for i in range(10):
+        content = make_pdf_bytes() + f"recent-paper-{i}".encode()
+        res = doc_test_client.upload(
+            "/api/v1/documents/upload",
+            content,
+            f"recent_paper_{i}.pdf",
+            headers=auth_headers,
+        )
+        assert res.status_code == 201
+
+    # Default listing should cap at 8 documents
+    res_default = doc_test_client.get("/api/v1/documents", headers=auth_headers)
+    assert res_default.status_code == 200
+    data_default = res_default.json()
+    assert len(data_default["documents"]) == 8
+    assert data_default["pagination"]["total"] == 10
+    assert data_default["pagination"]["per_page"] == 8
+
+    # Verify newest-first order (recent_paper_9 should be first, then 8, 7...)
+    doc_names = [d["filename"] for d in data_default["documents"]]
+    assert doc_names[0] == "recent_paper_9.pdf"
+    assert doc_names[1] == "recent_paper_8.pdf"
+
+    # Verify required fields are present in every document item
+    for doc_item in data_default["documents"]:
+        assert "id" in doc_item
+        assert "filename" in doc_item
+        assert "title" in doc_item
+        assert "status" in doc_item
+        assert "verification_score" in doc_item
+        assert "total_claims" in doc_item
+        assert "created_at" in doc_item
+
+    # Verify ?limit=5 parameter works as alias
+    res_limit = doc_test_client.get(
+        "/api/v1/documents",
+        headers=auth_headers,
+        params={"limit": 5},
+    )
+    assert res_limit.status_code == 200
+    assert len(res_limit.json()["documents"]) == 5
+
+
+def test_duplicate_upload_returns_existing_document_id(doc_test_client, auth_headers) -> None:
+    """Duplicate file upload returns 409 with existing_document_id and status in body & headers."""
+    pdf_data = make_pdf_bytes() + b"duplicate-check-payload"
+
+    # First upload
+    res1 = doc_test_client.upload(
+        "/api/v1/documents/upload",
+        pdf_data,
+        "original_paper.pdf",
+        headers=auth_headers,
+    )
+    assert res1.status_code == 201
+    first_doc_id = res1.json()["id"]
+
+    # Second upload with identical bytes
+    res2 = doc_test_client.upload(
+        "/api/v1/documents/upload",
+        pdf_data,
+        "duplicate_paper.pdf",
+        headers=auth_headers,
+    )
+    assert res2.status_code == 409
+    body = res2.json()
+    assert "Duplicate" in body["detail"]
+    assert body["existing_document_id"] == first_doc_id
+    assert "status" in body
+    assert res2.headers.get("X-Existing-Document-Id") == first_doc_id
+
+
+def test_delete_document_cascades_cleanly_with_relations(
+    doc_test_client, auth_headers, doc_db_session: Session
+) -> None:
+    """DELETE /api/v1/documents/{id} cascades cleanly without foreign key IntegrityError."""
+    from backend.app.models.document import DocumentVersion, Claim, Citation
+    from backend.app.models.research import ResearchSource, SourceVersion, EvidencePassage
+    from backend.app.models.verification import VerificationResult, VerificationEvidence, Report
+    from backend.app.models.enums import (
+        ClaimType,
+        EvidenceRelation,
+        ReportFormat,
+        RetrievalStatus,
+        SourceVersionType,
+        Verdict,
+    )
+
+    # 1. Upload a document
+    pdf_data = make_pdf_bytes() + b"cascade-delete-test"
+    upload_res = doc_test_client.upload(
+        "/api/v1/documents/upload",
+        pdf_data,
+        "cascade_test.pdf",
+        headers=auth_headers,
+    )
+    assert upload_res.status_code == 201
+    doc_id = uuid.UUID(upload_res.json()["id"])
+
+    # 2. Add relational data that would trigger RESTRICT foreign key errors
+    version = DocumentVersion(
+        document_id=doc_id,
+        version_number=1,
+        storage_key="test-key",
+        content_sha256="test-sha",
+    )
+    doc_db_session.add(version)
+    doc_db_session.flush()
+
+    claim = Claim(
+        document_id=doc_id,
+        document_version_id=version.id,
+        claim_type=ClaimType.STATISTICAL,
+        original_text="Test claim for cascade delete",
+    )
+    doc_db_session.add(claim)
+    doc_db_session.flush()
+
+    source = ResearchSource(
+        title="Cascade Test Source",
+        retrieval_status=RetrievalStatus.PENDING,
+    )
+    doc_db_session.add(source)
+    doc_db_session.flush()
+
+    src_ver = SourceVersion(
+        source_id=source.id,
+        version_type=SourceVersionType.PUBLISHED,
+        content_sha256="src-sha",
+    )
+    doc_db_session.add(src_ver)
+    doc_db_session.flush()
+
+    passage = EvidencePassage(
+        source_id=source.id,
+        source_version_id=src_ver.id,
+        passage_index=0,
+        passage_text="Supporting evidence passage text",
+    )
+    doc_db_session.add(passage)
+    doc_db_session.flush()
+
+    citation = Citation(
+        document_id=doc_id,
+        document_version_id=version.id,
+        citation_text="[1] Test citation",
+        research_source_id=source.id,
+    )
+    doc_db_session.add(citation)
+    doc_db_session.flush()
+
+    vr = VerificationResult(
+        claim_id=claim.id,
+        document_version_id=version.id,
+        verdict=Verdict.SUPPORTED,
+        explanation="Verified by evidence",
+        model_provider="mock",
+        model_name="mock-v1",
+    )
+    doc_db_session.add(vr)
+    doc_db_session.flush()
+
+    ve = VerificationEvidence(
+        verification_result_id=vr.id,
+        evidence_passage_id=passage.id,
+        relation=EvidenceRelation.SUPPORTING,
+        relevance_score=0.95,
+        rationale="Strong support",
+    )
+    doc_db_session.add(ve)
+
+    user_obj = doc_db_session.query(Document).filter_by(id=doc_id).one()
+    report = Report(
+        owner_id=user_obj.user_id,
+        document_id=doc_id,
+        document_version_id=version.id,
+        format=ReportFormat.PDF,
+        storage_key="mock_report.pdf",
+    )
+    doc_db_session.add(report)
+    doc_db_session.commit()
+
+    # 3. Call DELETE endpoint
+    del_res = doc_test_client.delete(f"/api/v1/documents/{doc_id}", headers=auth_headers)
+    assert del_res.status_code == 200
+    assert "deleted successfully" in del_res.json()["message"]
+
+    # 4. Verify document is gone
+    get_res = doc_test_client.get(f"/api/v1/documents/{doc_id}", headers=auth_headers)
+    assert get_res.status_code == 404

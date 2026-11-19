@@ -28,6 +28,9 @@ class DocumentResponse(BaseModel):
     file_size: int
     file_hash: str
     processing_status: DocumentStatus
+    status: str | None = None
+    verification_score: float | None = 0.0
+    total_claims: int | None = 0
     uploaded_at: datetime
     created_at: datetime
     updated_at: datetime
@@ -44,6 +47,9 @@ class DocumentUploadResponse(BaseModel):
     file_size: int
     file_hash: str
     processing_status: DocumentStatus
+    status: str | None = None
+    verification_score: float | None = 0.0
+    total_claims: int | None = 0
     uploaded_at: datetime
     message: str = "Document uploaded successfully"
 
@@ -76,7 +82,8 @@ class DocumentQueryParams(BaseModel):
     """Validated query parameters for document listing."""
 
     page: int = Field(default=1, ge=1)
-    per_page: int = Field(default=20, ge=1, le=100)
+    per_page: int = Field(default=8, ge=1, le=100)
+    limit: int | None = Field(default=None, ge=1, le=100)
     search: str | None = None
     file_type: str | None = None
     status: DocumentStatus | None = None
