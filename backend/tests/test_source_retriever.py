@@ -46,8 +46,37 @@ def source_db_session() -> Iterator[Session]:
 def test_validate_doi_format():
     assert validate_doi_format("10.1038/nature12345") is True
     assert validate_doi_format("10.1016/j.cell.2021.05.001") is True
+    assert validate_doi_format("10.1038/nature12345.") is True
+    assert validate_doi_format("10.1038/nature12345\n") is True
     assert validate_doi_format("invalid-doi-format") is False
     assert validate_doi_format("http://doi.org") is False
+    assert validate_doi_format("10.9999/broken.doi.never.existed.404") is False
+
+
+def test_fetch_source_metadata_fallback_for_broken_or_missing_doi():
+    # Broken DOI should fall back to search URL using title instead of broken doi.org link
+    source_broken = fetch_source_metadata("not-a-real-doi", "Nonexistent Citation Paper")
+    assert ("semanticscholar.org" in source_broken.source_url or "scholar.google.com" in source_broken.source_url)
+    assert "Nonexistent+Citation+Paper" in source_broken.source_url
+
+    # Missing DOI should also fall back to search URL using title
+    source_no_doi = fetch_source_metadata(None, "Paper Without DOI")
+    assert ("semanticscholar.org" in source_no_doi.source_url or "scholar.google.com" in source_no_doi.source_url)
+    assert "Paper+Without+DOI" in source_no_doi.source_url
+
+    # Valid DOI should retain direct doi.org link
+    source_valid = fetch_source_metadata("10.1038/nature14539", "Deep Learning")
+    assert source_valid.source_url == "https://doi.org/10.1038/nature14539"
+
+
+def test_check_doi_resolves():
+    from backend.app.core.doi_utils import check_doi_resolves
+    assert check_doi_resolves("10.1038/nature14539") is True
+    assert check_doi_resolves("10.9999/broken.doi.never.existed.404") is False
+    assert check_doi_resolves("10.5555/anvexa.demo.001") is False
+    assert check_doi_resolves("10.18653/v1/") is False
+    assert check_doi_resolves("not-a-real-doi") is False
+    assert check_doi_resolves(None) is False
 
 
 def test_check_doi_retraction():

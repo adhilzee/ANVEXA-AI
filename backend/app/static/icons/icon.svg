@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="anvexa-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#9333ea"/>
+    </linearGradient>
+    <linearGradient id="anvexa-badge" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <filter id="soft-shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-color="#0f172a" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+  
+  <!-- Outer Rounded Container -->
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#anvexa-bg)"/>
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="none" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1.5"/>
+  
+  <!-- Geometric ANVEXA "A" -->
+  <path d="M 32 11 L 15 50 L 24 50 L 28 40 L 36 40 L 40 50 L 49 50 Z M 32 23 L 34.6 33 L 29.4 33 Z" fill="#ffffff" filter="url(#soft-shadow)"/>
+  
+  <!-- Verification Badge -->
+  <circle cx="48" cy="48" r="11" fill="#0f172a"/>
+  <circle cx="48" cy="48" r="9.5" fill="url(#anvexa-badge)"/>
+  <path d="M 43.5 48 L 46.5 51 L 52.5 44.5" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

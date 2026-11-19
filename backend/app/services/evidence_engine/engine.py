@@ -114,7 +114,7 @@ def compute_lexical_similarity(query: str, passage: str) -> float:
 def compute_cosine_similarity(vec_a: Sequence[float], vec_b: Sequence[float]) -> float:
     """Compute cosine similarity between two unit vectors."""
     dot = sum(a * b for a, b in zip(vec_a, vec_b))
-    return max(0.0, min(1.0, (dot + 1.0) / 2.0))  # normalize to 0..1
+    return max(0.0, min(1.0, dot))
 
 
 def score_passage_relevance(query: str, passage_text: str) -> float:
@@ -124,6 +124,8 @@ def score_passage_relevance(query: str, passage_text: str) -> float:
     vec_passage = compute_pseudo_embedding(passage_text)
     vector_score = compute_cosine_similarity(vec_query, vec_passage)
 
-    # 60% semantic + 40% lexical
-    combined = 0.6 * vector_score + 0.4 * lexical_score
+    if lexical_score > 0:
+        combined = 0.5 * vector_score + 0.5 * lexical_score
+    else:
+        combined = 0.4 * vector_score
     return round(min(1.0, max(0.0, combined)), 4)

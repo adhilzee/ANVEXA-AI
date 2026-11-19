@@ -76,11 +76,12 @@ def retrieve_relevant_passages_for_claim(
     claim: Claim,
     db: Session,
     top_k: int = 5,
+    min_relevance_threshold: float = 0.20,
 ) -> list[tuple[EvidencePassage, float]]:
-    """Retrieve top-K most relevant evidence passages for a specific claim."""
-    query_text = f"{claim.original_text} {claim.context_text or ''}"
+    """Retrieve relevant evidence passages for a specific claim with dynamic filtering."""
+    query_text = f"{claim.original_text} {claim.context_text or ''}".strip()
 
-    # First priority: check evidence passages from cited sources linked to this claim
+    # 1. Identify sources directly cited by this specific claim
     from backend.app.models.document import ClaimCitation
     claim_citations = db.execute(
         select(ClaimCitation).where(ClaimCitation.claim_id == claim.id)
@@ -92,18 +93,37 @@ def retrieve_relevant_passages_for_claim(
         if cit and cit.research_source_id:
             cited_source_ids.add(cit.research_source_id)
 
-    # Get available passages
-    all_passages = db.execute(select(EvidencePassage)).scalars().all()
-    if not all_passages:
+    # 2. Scope candidate passages to sources associated with this document version
+    candidate_passages: list[EvidencePassage] = []
+    if claim.document_version_id:
+        doc_citations = db.execute(
+            select(Citation).where(Citation.document_version_id == claim.document_version_id)
+        ).scalars().all()
+        doc_source_ids = {c.research_source_id for c in doc_citations if c.research_source_id is not None}
+        if doc_source_ids:
+            candidate_passages = db.execute(
+                select(EvidencePassage).where(EvidencePassage.source_id.in_(doc_source_ids))
+            ).scalars().all()
+
+    # Fallback to all available passages if no version-scoped passages exist (e.g. standalone test mocks)
+    if not candidate_passages:
+        candidate_passages = db.execute(select(EvidencePassage)).scalars().all()
+
+    if not candidate_passages:
         return []
 
     scored_passages: list[tuple[EvidencePassage, float]] = []
-    for p in all_passages:
-        score = score_passage_relevance(query_text, p.passage_text)
-        # Boost passages from the citation linked directly to this claim
+    for p in candidate_passages:
+        raw_score = score_passage_relevance(query_text, p.passage_text)
+        # Passages directly linked to the claim's citation receive citation corroboration boost
         if p.source_id in cited_source_ids:
-            score = min(1.0, score + 0.25)
-        scored_passages.append((p, score))
+            score = min(1.0, raw_score + 0.25)
+        else:
+            score = raw_score
+
+        # Only retain passages meeting the minimum relevance threshold to prevent false evidence inflation
+        if score >= min_relevance_threshold:
+            scored_passages.append((p, score))
 
     scored_passages.sort(key=lambda x: x[1], reverse=True)
     return scored_passages[:top_k]

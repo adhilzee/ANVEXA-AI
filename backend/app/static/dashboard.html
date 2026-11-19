@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+  <title>ANVEXA AI — Academic Document Verification Platform</title>
+  
+  <!-- PWA Manifest & App Icons -->
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="alternate icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/icons/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="/static/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="/static/icons/icon-512.png">
+
+  <!-- Mobile & PWA Capabilities (Android, iOS Safari, Windows) -->
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ANVEXA AI">
+  <meta name="application-name" content="ANVEXA AI">
+  <meta name="msapplication-TileColor" content="#0f172a">
+  <meta name="msapplication-TileImage" content="/static/icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.9rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .logo-group { display: flex; align-items: center; gap: 0.75rem; }
+    .logo-badge {
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      padding: 0.35rem 0.75rem;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: 0.05em;
+    }
+    .platform-title { font-size: 1.05rem; font-weight: 600; }
+    .header-user {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .engine-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+      padding: 0.35rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      background: #34d399;
+      border-radius: 50%;
+      box-shadow: 0 0 6px #34d399;
+    }
+    main {
+      flex: 1;
+      max-width: 1200px;
+      width: 100%;
+      margin: 1.5rem auto 3rem;
+      padding: 0 1.5rem;
+    }
+    .hero {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .hero h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #a5b4fc, #e2e8f0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.4rem;
+    }
+    .hero p { color: var(--text-muted); font-size: 1.05rem; }
+    .nav-tabs {
+      display: flex;
+      gap: 0.5rem;
+      background: var(--card-bg);
+      padding: 0.35rem;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+      margin-bottom: 1.5rem;
+    }
+    .tab-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-weight: 500;
+      padding: 0.65rem 1rem;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.95rem;
+    }
+    .tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .card h2 {
+      font-size: 1.25rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .upload-dropzone {
+      border: 2px dashed #475569;
+      border-radius: 10px;
+      padding: 2.25rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: rgba(15, 23, 42, 0.4);
+      margin-bottom: 1.5rem;
+    }
+    .upload-dropzone:hover, .upload-dropzone.dragover {
+      border-color: #818cf8;
+      background: rgba(79, 70, 229, 0.08);
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.65rem 1.25rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary { background: #334155; color: var(--text-main); }
+    .btn-secondary:hover { background: #475569; }
+    .btn-pill {
+      background: #334155;
+      color: #cbd5e1;
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid #475569;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-pill:hover {
+      background: #4f46e5;
+      border-color: #6366f1;
+      color: #fff;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge-supported { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .badge-contradictory { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .badge-partly { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+    .badge-unverifiable { background: rgba(148, 163, 184, 0.2); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.4); }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      text-align: center;
+    }
+    .stat-value { font-size: 2rem; font-weight: 700; color: #fff; margin: 0.25rem 0; }
+    .stat-label { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .claim-item {
+      background: #182234;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 1.2rem;
+      margin-bottom: 1rem;
+      transition: all 0.2s;
+    }
+    .claim-item:hover { border-color: #6366f1; }
+    .claim-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.6rem;
+    }
+    .claim-text { font-size: 1rem; line-height: 1.5; margin-bottom: 0.75rem; }
+    .claim-explanation {
+      font-size: 0.9rem;
+      color: #94a3b8;
+      background: #0f172a;
+      padding: 0.75rem;
+      border-radius: 6px;
+      border-left: 3px solid #6366f1;
+    }
+    .issue-alert {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+    .progress-bar-bg {
+      background: #334155;
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 1rem 0;
+    }
+    .progress-bar-fill {
+      background: linear-gradient(90deg, #6366f1, #10b981);
+      height: 100%;
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+    /* Selected File Preview Box */
+    .file-preview-card {
+      background: rgba(30, 41, 59, 0.95);
+      border: 2px solid #6366f1;
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15);
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Interactive Evidence Badges */
+    .ev-badge-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      user-select: none;
+      background: transparent;
+      outline: none;
+    }
+    .ev-badge-clickable {
+      cursor: pointer;
+    }
+    .ev-badge-clickable:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      filter: brightness(1.2);
+    }
+    .ev-badge-clickable.active {
+      outline: 2px solid #818cf8;
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+    }
+    .ev-badge-muted {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .ev-chevron {
+      font-size: 0.65rem;
+      transition: transform 0.2s ease;
+      display: inline-block;
+      margin-left: 0.2rem;
+    }
+    .ev-badge-clickable.active .ev-chevron {
+      transform: rotate(180deg);
+    }
+
+    /* Expandable Evidence Drawer */
+    .evidence-drawer {
+      margin-top: 0.85rem;
+      background: #090e1a;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 1rem;
+      animation: fadeIn 0.25s ease;
+    }
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #1e293b;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+    .drawer-close-btn {
+      background: transparent;
+      border: none;
+      color: #64748b;
+      cursor: pointer;
+      font-size: 0.82rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    .drawer-close-btn:hover {
+      color: #cbd5e1;
+      background: #1e293b;
+    }
+    .passage-card {
+      background: #131d2e;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: 0.85rem 1rem;
+      margin-bottom: 0.75rem;
+      border-left: 3px solid #64748b;
+      transition: border-color 0.2s;
+    }
+    .passage-card:last-child {
+      margin-bottom: 0;
+    }
+    .passage-card.stance-supporting { border-left-color: #10b981; }
+    .passage-card.stance-contradicting { border-left-color: #ef4444; }
+    .passage-card.stance-neutral { border-left-color: #64748b; }
+
+    .passage-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.4rem;
+      font-size: 0.8rem;
+    }
+    .passage-source-title {
+      font-weight: 600;
+      color: #e2e8f0;
+      margin-right: 0.5rem;
+    }
+    .passage-source-authors {
+      color: #94a3b8;
+      font-size: 0.75rem;
+      margin-top: 0.15rem;
+    }
+    .passage-score-badge {
+      background: #1e293b;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      color: #cbd5e1;
+      white-space: nowrap;
+      border: 1px solid #334155;
+    }
+    .passage-snippet {
+      font-size: 0.88rem;
+      line-height: 1.5;
+      color: #cbd5e1;
+      background: rgba(15, 23, 42, 0.6);
+      padding: 0.6rem 0.75rem;
+      border-radius: 4px;
+      margin-top: 0.4rem;
+      border: 1px solid rgba(51, 65, 85, 0.5);
+      font-style: italic;
+    }
+    .passage-rationale-note {
+      font-size: 0.78rem;
+      color: #818cf8;
+      margin-top: 0.4rem;
+    }
+
+    /* PWA Install Button & Modal Styles */
+    .pwa-install-pill {
+      display: none;
+      align-items: center;
+      gap: 0.45rem;
+      background: linear-gradient(135deg, rgba(79, 70, 229, 0.35), rgba(168, 85, 247, 0.4));
+      border: 1px solid rgba(168, 85, 247, 0.55);
+      color: #f8fafc;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 0 12px rgba(129, 140, 248, 0.25);
+    }
+    .pwa-install-pill:hover {
+      background: linear-gradient(135deg, rgba(79, 70, 229, 0.55), rgba(168, 85, 247, 0.6));
+      border-color: #c084fc;
+      transform: translateY(-1px);
+      box-shadow: 0 0 16px rgba(168, 85, 247, 0.4);
+    }
+    .pwa-modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.82);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1rem;
+    }
+    .pwa-modal-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      max-width: 520px;
+      width: 100%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 25px rgba(99, 102, 241, 0.25);
+      overflow: hidden;
+      animation: pwaFadeIn 0.25s ease-out;
+    }
+    @keyframes pwaFadeIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .pwa-modal-header {
+      padding: 1.15rem 1.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #334155;
+      background: rgba(30, 41, 59, 0.6);
+    }
+    .pwa-modal-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+    .pwa-modal-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .pwa-modal-header h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #f8fafc;
+      margin: 0;
+    }
+    .pwa-modal-header p {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+    .pwa-modal-close-btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 1.5rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+    }
+    .pwa-modal-close-btn:hover {
+      color: #f8fafc;
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .pwa-modal-body {
+      padding: 1.25rem 1.4rem;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .pwa-platform-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 0.9rem 1rem;
+      margin-bottom: 0.8rem;
+    }
+    .pwa-platform-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      color: #e2e8f0;
+      font-size: 0.92rem;
+      margin-bottom: 0.4rem;
+    }
+    .pwa-step-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+      font-size: 0.84rem;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+    .pwa-step-list li {
+      margin-bottom: 0.25rem;
+      display: flex;
+      align-items: baseline;
+      gap: 0.4rem;
+    }
+    .pwa-step-list li strong {
+      color: #a5b4fc;
+    }
+    .pwa-install-action-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #4f46e5, #9333ea);
+      color: #ffffff;
+      border: none;
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      transition: all 0.2s;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+    }
+    .pwa-install-action-btn:hover {
+      background: linear-gradient(135deg, #4338ca, #7e22ce);
+      box-shadow: 0 6px 18px rgba(99, 102, 241, 0.5);
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo-group">
+      <span class="logo-badge">ANVEXA</span>
+      <span class="platform-title">Academic Document Verification Platform</span>
+    </div>
+    <div class="header-user">
+      <span class="engine-status-badge">
+        <span class="status-dot"></span>
+        Verification Engine Online
+      </span>
+      <!-- PWA Install Button -->
+      <button id="pwa-install-btn" class="pwa-install-pill" onclick="triggerPwaInstall()" title="Install ANVEXA AI as an application on Android, iOS, or PC">
+        <span>📲</span>
+        <span id="pwa-install-btn-text">Install App</span>
+      </button>
+      <div style="display: inline-flex; align-items: center; gap: 0.45rem; background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.25)); border: 1px solid rgba(168, 85, 247, 0.45); padding: 0.35rem 0.85rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; color: #f1f5f9; box-shadow: 0 0 12px rgba(168, 85, 247, 0.25);">
+        <span style="color: #c084fc; font-size: 0.95rem;">✨</span>
+        <span>Code Nova</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- PWA Install & Download Modal -->
+  <div id="pwa-install-modal" class="pwa-modal-backdrop" onclick="if(event.target===this)closePwaModal()">
+    <div class="pwa-modal-card">
+      <div class="pwa-modal-header">
+        <div class="pwa-modal-title-wrap">
+          <img src="/static/icons/icon-192.png" alt="ANVEXA AI" class="pwa-modal-logo">
+          <div>
+            <h3>Install ANVEXA AI</h3>
+            <p>Standalone App for Android, iOS, Windows & Mac</p>
+          </div>
+        </div>
+        <button class="pwa-modal-close-btn" onclick="closePwaModal()" aria-label="Close modal">&times;</button>
+      </div>
+      <div class="pwa-modal-body">
+        <div id="pwa-native-prompt-container" style="display:none; margin-bottom: 1rem;">
+          <button class="pwa-install-action-btn" onclick="triggerNativeInstallPrompt()">
+            <span>⚡ Install Directly to Device Now</span>
+          </button>
+          <div style="text-align:center; margin: 0.75rem 0 0.5rem; color: #64748b; font-size: 0.8rem;">— OR MANUAL INSTALLATION —</div>
+        </div>
+
+        <!-- Android Guide -->
+        <div class="pwa-platform-card">
+          <div class="pwa-platform-header">
+            <span>🤖</span>
+            <span>Android (Chrome / Edge / Samsung)</span>
+          </div>
+          <ul class="pwa-step-list">
+            <li><span>1.</span> Tap the <strong>⋮ (Menu)</strong> icon in your browser toolbar.</li>
+            <li><span>2.</span> Select <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.</li>
+            <li><span>3.</span> Tap <strong>Install</strong> to place ANVEXA AI on your home screen & app drawer.</li>
+          </ul>
+        </div>
+
+        <!-- iOS Guide -->
+        <div class="pwa-platform-card">
+          <div class="pwa-platform-header">
+            <span>🍏</span>
+            <span>iPhone & iPad (Safari)</span>
+          </div>
+          <ul class="pwa-step-list">
+            <li><span>1.</span> Open ANVEXA AI in <strong>Safari</strong>.</li>
+            <li><span>2.</span> Tap the <strong>Share</strong> button <span style="font-size: 1.1rem; line-height: 1;">⎋</span> in the bottom toolbar.</li>
+            <li><span>3.</span> Scroll down and tap <strong>"Add to Home Screen" <span style="font-size: 1.1rem; line-height: 1;">⊞</span></strong>.</li>
+            <li><span>4.</span> Tap <strong>Add</strong> in the top-right corner.</li>
+          </ul>
+        </div>
+
+        <!-- PC / Mac Guide -->
+        <div class="pwa-platform-card" style="margin-bottom: 0;">
+          <div class="pwa-platform-header">
+            <span>💻</span>
+            <span>PC & Mac (Chrome / Edge / Brave)</span>
+          </div>
+          <ul class="pwa-step-list">
+            <li><span>1.</span> Click the <strong>Install icon <span style="font-size: 1rem;">⊕</span></strong> on the right side of the URL address bar.</li>
+            <li><span>2.</span> Click <strong>Install</strong> to run ANVEXA AI as an independent desktop window app with taskbar pinning.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main>
+    <div class="hero">
+      <h1>Evidence-Traceable Document Verification</h1>
+      <p>Automated fact-checking, citation integrity analysis, retraction audits, and verdict classification for academic literature.</p>
+    </div>
+
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('tab-verify')">1. Verify Paper</button>
+      <button class="tab-btn" onclick="switchTab('tab-claims')">2. Claims & Evidence</button>
+      <button class="tab-btn" onclick="switchTab('tab-issues')">3. Reference Issues & Retractions</button>
+      <button class="tab-btn" onclick="switchTab('tab-reports')">4. Audit Reports</button>
+    </div>
+
+    <!-- TAB 1: VERIFY -->
+    <div id="tab-verify" class="tab-content active">
+      <div class="card">
+        <h2>📄 Submit Document for Verification</h2>
+        <p style="color: var(--text-muted); margin-bottom: 1.25rem;">
+          Select a local manuscript file (.pdf or .docx) or load one of the pre-configured academic sample papers below.
+        </p>
+
+        <!-- Drag & Drop Zone -->
+        <input type="file" id="file-input" accept=".pdf,.docx" style="display: none;" onchange="handleFileSelected(event)">
+        
+        <div class="upload-dropzone" id="dropzone" onclick="document.getElementById('file-input').click()">
+          <div style="font-size: 2.4rem; margin-bottom: 0.5rem;">📂</div>
+          <div style="font-weight: 600; font-size: 1.05rem; margin-bottom: 0.25rem;">
+            Click to browse your local documents or drag & drop here
+          </div>
+          <div style="font-size: 0.85rem; color: var(--text-muted);">
+            Supports academic manuscripts in <b>.PDF</b> and <b>.DOCX</b> format (up to 50 MB)
+          </div>
+        </div>
+
+        <!-- SELECTED FILE PREVIEW (Displayed once a file is chosen) -->
+        <div id="selected-file-card" class="file-preview-card" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <div id="selected-file-icon" style="font-size: 2.2rem;">📄</div>
+              <div>
+                <div style="font-weight: 700; font-size: 1.1rem; color: #fff;" id="selected-filename">sample_paper.pdf</div>
+                <div style="font-size: 0.85rem; color: #94a3b8; display: flex; gap: 0.6rem; align-items: center; margin-top: 0.25rem;">
+                  <span id="selected-filesize">2.7 KB</span>
+                  <span>•</span>
+                  <span class="badge" id="selected-filetype" style="background: #334155; color: #a5b4fc;">PDF Document</span>
+                  <span>•</span>
+                  <span style="color: #34d399; font-weight: 600; display: inline-flex; align-items: center; gap: 0.3rem;">
+                    ✓ Selected & Ready
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+              <button class="btn btn-secondary" style="padding: 0.5rem 0.9rem; font-size: 0.85rem;" onclick="clearSelectedFile()">
+                ✕ Choose Different File
+              </button>
+              <button class="btn btn-primary" id="btn-start-verify" onclick="startVerificationOfSelected()">
+                🚀 Start Verification
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PRE-BUILT DEMO SAMPLES -->
+        <div style="padding: 1.25rem; background: rgba(15, 23, 42, 0.6); border-radius: 8px; border: 1px solid var(--card-border); margin-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div style="font-weight: 600; color: #a5b4fc; font-size: 0.95rem;">
+              📚 Ready-to-Verify Academic Demonstration Papers:
+            </div>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">One-click loading from <code>sample_papers/</code></span>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <!-- Sample 1 -->
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid #334155; flex-wrap: wrap; gap: 0.5rem;">
+              <div>
+                <span style="font-weight: 600; color: #fff;">sample_biomedical_verification_paper.pdf</span>
+                <span class="badge" style="background: #334155; color: #a5b4fc; margin-left: 0.5rem;">PDF (2.7 KB)</span>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
+                  Tests numerical claim extraction (95%, 40%, p &lt; 0.001), <b>retracted Lancet paper alert</b> (10.1016/s0140-6736), and broken DOIs.
+                </div>
+              </div>
+              <button class="btn-pill" onclick="loadSamplePaper('sample_biomedical_verification_paper.pdf', 'application/pdf')">
+                Select This Paper
+              </button>
+            </div>
+
+            <!-- Sample 2 -->
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid #334155; flex-wrap: wrap; gap: 0.5rem;">
+              <div>
+                <span style="font-weight: 600; color: #fff;">clinical_oncology_immunotherapy_trial.docx</span>
+                <span class="badge" style="background: #1e3a5f; color: #93c5fd; margin-left: 0.5rem;">DOCX (1.7 KB)</span>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
+                  Tests native <b>Word DOCX</b> parser, clinical oncology trial statistics, 5-year survival rates, and hazard ratios.
+                </div>
+              </div>
+              <button class="btn-pill" onclick="loadSamplePaper('clinical_oncology_immunotherapy_trial.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')">
+                Select This Paper
+              </button>
+            </div>
+
+            <!-- Sample 3 -->
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid #334155; flex-wrap: wrap; gap: 0.5rem;">
+              <div>
+                <span style="font-weight: 600; color: #fff;">direct_air_carbon_capture_review.pdf</span>
+                <span class="badge" style="background: #334155; color: #a5b4fc; margin-left: 0.5rem;">PDF (1.8 KB)</span>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
+                  Tests thermodynamic calculations, direct air capture energetic limits, and clean supported verdicts.
+                </div>
+              </div>
+              <button class="btn-pill" onclick="loadSamplePaper('direct_air_carbon_capture_review.pdf', 'application/pdf')">
+                Select This Paper
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PIPELINE EXECUTION PROGRESS CARD -->
+        <div id="pipeline-status-card" style="display: none; background: #0f172a; border: 1px solid #4f46e5; border-radius: 8px; padding: 1.25rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 id="pipeline-step-text" style="font-size: 1.05rem; color: #a5b4fc;">Initializing Pipeline...</h3>
+            <span id="pipeline-percent-badge" style="font-size: 0.85rem; font-weight: 700; color: #34d399;">20%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="pipeline-progress-bar"></div>
+          </div>
+          <p id="pipeline-subtext" style="font-size: 0.85rem; color: var(--text-muted);">Please wait while citations, claims, and external sources are analyzed...</p>
+        </div>
+      </div>
+
+      <!-- VERIFICATION SUMMARY STATS -->
+      <div id="verification-summary-section" style="display: none;">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="stat-score" style="color: #60a5fa;">0%</div>
+            <div class="stat-label">Verification Score</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-total-claims">0</div>
+            <div class="stat-label">Total Claims Extracted</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-supported" style="color: #34d399;">0</div>
+            <div class="stat-label">Supported Claims</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-contradictory" style="color: #f87171;">0</div>
+            <div class="stat-label">Contradictory Claims</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-issues" style="color: #fbbf24;">0</div>
+            <div class="stat-label">Flagged Issues & Retractions</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: CLAIMS & EVIDENCE -->
+    <div id="tab-claims" class="tab-content">
+      <div class="card">
+        <h2>🔍 Extracted Claims & Verification Verdicts</h2>
+        <div id="claims-container">
+          <p style="color: var(--text-muted);">No document verified yet. Select and verify a paper from Tab 1 to inspect claims.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: REFERENCE INTEGRITY & RETRACTIONS -->
+    <div id="tab-issues" class="tab-content">
+      <div class="card">
+        <h2>⚠️ Citation Integrity & Retraction Warnings</h2>
+        <div id="issues-container">
+          <p style="color: var(--text-muted);">No reference issues detected yet. Select and verify a paper from Tab 1 to inspect references.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: AUDIT REPORTS -->
+    <div id="tab-reports" class="tab-content">
+      <div class="card">
+        <h2>📊 Verification Audit Reports & Certificates</h2>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+          Download certified verification audit certificates for editorial submission, peer review, and institutional compliance.
+        </p>
+
+        <!-- Active Document Badge -->
+        <div id="report-active-doc" style="display: flex; align-items: center; gap: 0.75rem; background: #182234; padding: 0.85rem 1.2rem; border-radius: 8px; border: 1px solid var(--card-border); margin-bottom: 1.5rem;">
+          <span style="font-size: 1.5rem;">📄</span>
+          <div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Manuscript Under Audit:</div>
+            <div id="report-active-title" style="font-weight: 600; color: #fff; font-size: 1rem;">Advancements in Neural Verification & Empirical Therapeutics</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+          <button class="btn btn-primary" onclick="downloadReport('pdf')">
+            📑 Export PDF Verification Certificate
+          </button>
+          <button class="btn btn-secondary" onclick="downloadReport('csv')">
+            📊 Export CSV Raw Audit Data
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- SUBTLE DEVELOPER FOOTER -->
+  <footer style="margin-top: 4rem; padding: 2rem 0; border-top: 1px solid #1e293b; text-align: center; color: #64748b; font-size: 0.85rem;">
+    <p>ANVEXA AI Platform v0.1.0 • Evidence-Traceable Academic Document Verification System</p>
+    <p style="margin-top: 0.5rem;">
+      <a href="/docs" target="_blank" style="color: #818cf8; text-decoration: none; margin-right: 1.5rem;">Developer API Reference (Swagger)</a>
+      <a href="/health" target="_blank" style="color: #818cf8; text-decoration: none;">System Health Status</a>
+    </p>
+  </footer>
+
+  <script>
+    let currentDocId = null;
+    let authToken = null;
+    let selectedFileObject = null; // Stores currently selected File / Blob
+
+    // Tab switcher
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+      if (activeBtn) activeBtn.classList.add('active');
+    }
+
+    // Drag and drop handlers
+    const dropzone = document.getElementById('dropzone');
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        displaySelectedFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    // File input change
+    function handleFileSelected(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      displaySelectedFile(file);
+      event.target.value = ''; // Reset so the same file can be re-selected if needed
+    }
+
+    // Display selected file with visual feedback
+    function displaySelectedFile(file) {
+      selectedFileObject = file;
+      const isDocx = file.name.toLowerCase().endsWith('.docx');
+      
+      document.getElementById('selected-filename').innerText = file.name;
+      document.getElementById('selected-filesize').innerText = formatBytes(file.size);
+      document.getElementById('selected-filetype').innerText = isDocx ? 'DOCX Document' : 'PDF Document';
+      document.getElementById('selected-file-icon').innerText = isDocx ? '📝' : '📄';
+      
+      // Make selected file card visible
+      const card = document.getElementById('selected-file-card');
+      card.style.display = 'block';
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      // Reset verify button state
+      const btn = document.getElementById('btn-start-verify');
+      btn.disabled = false;
+      btn.innerText = '🚀 Start Verification';
+    }
+
+    // Clear selected file
+    function clearSelectedFile() {
+      selectedFileObject = null;
+      document.getElementById('selected-file-card').style.display = 'none';
+      document.getElementById('pipeline-status-card').style.display = 'none';
+    }
+
+    // Load pre-configured sample paper from /sample-papers/
+    async function loadSamplePaper(filename, mimeType) {
+      try {
+        const resp = await fetch(`/sample-papers/${filename}`);
+        if (!resp.ok) {
+          alert(`Could not load sample paper from /sample-papers/${filename}`);
+          return;
+        }
+        const blob = await resp.blob();
+        const file = new File([blob], filename, { type: mimeType });
+        displaySelectedFile(file);
+      } catch (err) {
+        console.error('Error loading sample paper:', err);
+        alert('Could not fetch sample paper.');
+      }
+    }
+
+    // Format bytes helper
+    function formatBytes(bytes) {
+      if (!bytes || bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    // Auth helper
+    async function ensureAuth() {
+      if (authToken) return authToken;
+      try {
+        const resp = await fetch('/api/v1/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: 'demo@anvexa.ai', password: 'DemoPassword123!' })
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          authToken = data.access_token;
+          return authToken;
+        }
+      } catch (e) {}
+
+      // Fallback register
+      try {
+        await fetch('/api/v1/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: 'demo@anvexa.ai',
+            password: 'DemoPassword123!',
+            full_name: 'Team Code Nova'
+          })
+        });
+        const loginResp = await fetch('/api/v1/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: 'demo@anvexa.ai', password: 'DemoPassword123!' })
+        });
+        const data = await loginResp.json();
+        authToken = data.access_token;
+        return authToken;
+      } catch (err) {
+        console.error('Auth error', err);
+      }
+    }
+
+    // Start verification of currently selected file
+    async function startVerificationOfSelected() {
+      if (!selectedFileObject) {
+        alert('Please select or drop a file first.');
+        return;
+      }
+
+      const btn = document.getElementById('btn-start-verify');
+      btn.disabled = true;
+      btn.innerText = 'Verifying...';
+
+      const formData = new FormData();
+      formData.append('file', selectedFileObject, selectedFileObject.name);
+
+      await executeVerificationPipeline(formData, selectedFileObject.name);
+      btn.disabled = false;
+      btn.innerText = '🚀 Start Verification';
+    }
+
+    // Core verification pipeline executor with live progress
+    async function executeVerificationPipeline(formData, displayName) {
+      const statusCard = document.getElementById('pipeline-status-card');
+      const progressBar = document.getElementById('pipeline-progress-bar');
+      const stepText = document.getElementById('pipeline-step-text');
+      const subText = document.getElementById('pipeline-subtext');
+      const percentBadge = document.getElementById('pipeline-percent-badge');
+      
+      statusCard.style.display = 'block';
+      statusCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      // Stage 1: Upload
+      progressBar.style.width = '20%';
+      percentBadge.innerText = '20%';
+      stepText.innerText = `Stage 1/4: Uploading "${displayName}" and validating format...`;
+      subText.innerText = 'Verifying MIME type, calculating SHA-256 integrity hash, staging to secure storage...';
+
+      const token = await ensureAuth();
+      const uploadResp = await fetch('/api/v1/documents/upload', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+
+      // Handle duplicate uploads gracefully by triggering fresh verification with current classifier
+      if (uploadResp.status === 409) {
+        progressBar.style.width = '60%';
+        percentBadge.innerText = '60%';
+        stepText.innerText = `"${displayName}" previously indexed. Re-verifying with latest classifier...`;
+        subText.innerText = 'Regenerating verification verdicts and evidence rationale...';
+
+        const docsResp = await fetch('/api/v1/documents', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const docsData = await docsResp.json();
+        const existingDoc = docsData.documents.find(d => d.filename === displayName) || docsData.documents[0];
+        if (existingDoc) {
+          currentDocId = existingDoc.id;
+          
+          // Re-run verification to ensure results are generated with the latest classifier logic
+          await fetch(`/api/v1/documents/${currentDocId}/verify`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+
+          progressBar.style.width = '100%';
+          percentBadge.innerText = '100%';
+          stepText.innerText = `✓ Fresh verification complete for "${existingDoc.filename}"!`;
+          subText.innerText = 'Summary metrics and evidence rationale loaded below.';
+          await loadVerificationData(currentDocId, token);
+          return;
+        }
+      }
+
+      if (!uploadResp.ok) {
+        const err = await uploadResp.json().catch(() => ({}));
+        alert(`Upload error: ${err.detail || 'Could not upload document'}`);
+        return;
+      }
+
+      const docData = await uploadResp.json();
+      currentDocId = docData.id;
+
+      // Stage 2: Claims & Citations
+      progressBar.style.width = '50%';
+      percentBadge.innerText = '50%';
+      stepText.innerText = 'Stage 2/4: Parsing sections & extracting claim sentences...';
+      subText.innerText = 'Classifying claims (Numerical, Causal, Comparative, Temporal) and linking bibliography citations...';
+
+      // Stage 3 & 4: Pipeline execution
+      progressBar.style.width = '80%';
+      percentBadge.innerText = '80%';
+      stepText.innerText = 'Stage 3/4: Resolving DOIs, checking retractions & scoring evidence...';
+      subText.innerText = 'Querying CrossRef metadata, scanning retraction database, and computing semantic embeddings...';
+
+      const verifyResp = await fetch(`/api/v1/documents/${currentDocId}/verify`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (!verifyResp.ok) {
+        alert('Verification pipeline encountered an error.');
+        return;
+      }
+
+      // Complete
+      progressBar.style.width = '100%';
+      percentBadge.innerText = '100%';
+      stepText.innerText = `✓ Verification complete for "${displayName}"!`;
+      subText.innerText = 'All claims, reference checks, and evidence verdicts are loaded below.';
+
+      // Load results
+      await loadVerificationData(currentDocId, token);
+    }
+
+    // Load full verification data into dashboard cards and tabs
+    async function loadVerificationData(docId, token) {
+      // 1. Summary
+      const sumResp = await fetch(`/api/v1/documents/${docId}/verification-summary`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const summary = await sumResp.json();
+      
+      document.getElementById('stat-score').innerText = (summary.verification_score || 0).toFixed(0) + '%';
+      document.getElementById('stat-total-claims').innerText = summary.total_claims;
+      document.getElementById('stat-supported').innerText = (summary.verdict_distribution.supported || 0) + (summary.verdict_distribution.partly_supported || 0);
+      document.getElementById('stat-contradictory').innerText = summary.verdict_distribution.contradictory || 0;
+      document.getElementById('stat-issues').innerText = summary.reference_issues_count;
+      document.getElementById('verification-summary-section').style.display = 'block';
+
+      // 2. Claims
+      const claimsResp = await fetch(`/api/v1/documents/${docId}/claims?per_page=1000`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const claimsData = await claimsResp.json();
+
+      const resultsResp = await fetch(`/api/v1/documents/${docId}/verification-results`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const resultsData = await resultsResp.json();
+      const resultMap = {};
+      resultsData.forEach(r => resultMap[r.claim_id] = r);
+      window.verificationResultsMap = resultMap;
+      window.claimDrawerStates = window.claimDrawerStates || {};
+
+      let claimsHtml = '';
+      claimsData.claims.forEach(c => {
+        const res = resultMap[c.id];
+        const verdict = res ? res.verdict : 'pending';
+        const badgeClass = verdict === 'supported' ? 'badge-supported' : (verdict === 'contradictory' ? 'badge-contradictory' : (verdict === 'unverifiable' ? 'badge-unverifiable' : 'badge-partly'));
+
+        // Proper null handling for confidence score (no artificial 0.8 fallback)
+        let confDisplay = 'UNRATED';
+        if (res && res.confidence_score !== null && res.confidence_score !== undefined) {
+          confDisplay = `${Math.round(res.confidence_score * 100)}% CONFIDENCE`;
+        } else if (res && res.confidence) {
+          confDisplay = `${res.confidence.toUpperCase()} CONFIDENCE`;
+        }
+
+        // Supporting, contradicting, and neutral passages displayed separately
+        const supCount = res ? (res.supporting_count || 0) : 0;
+        const contraCount = res ? (res.contradicting_count || 0) : 0;
+        const neuCount = res ? (res.neutral_count || 0) : 0;
+        const retCount = res ? (res.retrieved_count || 0) : 0;
+
+        const supClickable = supCount > 0;
+        const contraClickable = contraCount > 0;
+        const neuClickable = neuCount > 0;
+        const retClickable = retCount > 0;
+
+        const supBadge = `
+          <button id="ev-btn-${c.id}-supporting" 
+                  class="ev-badge-btn ${supClickable ? 'ev-badge-clickable' : 'ev-badge-muted'}" 
+                  style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35);"
+                  ${supClickable ? `onclick="toggleEvidenceDrawer('${c.id}', 'supporting')"` : 'disabled'}
+                  title="${supClickable ? 'Click to inspect supporting passages' : 'No supporting passages'}">
+            ✓ ${supCount} Supporting ${supClickable ? '<span class="ev-chevron">▼</span>' : ''}
+          </button>
+        `;
+
+        const contraBadge = `
+          <button id="ev-btn-${c.id}-contradicting" 
+                  class="ev-badge-btn ${contraClickable ? 'ev-badge-clickable' : 'ev-badge-muted'}" 
+                  style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35);"
+                  ${contraClickable ? `onclick="toggleEvidenceDrawer('${c.id}', 'contradicting')"` : 'disabled'}
+                  title="${contraClickable ? 'Click to inspect contradicting passages' : 'No contradicting passages'}">
+            ✗ ${contraCount} Contradicting ${contraClickable ? '<span class="ev-chevron">▼</span>' : ''}
+          </button>
+        `;
+
+        const neuBadge = `
+          <button id="ev-btn-${c.id}-neutral" 
+                  class="ev-badge-btn ${neuClickable ? 'ev-badge-clickable' : 'ev-badge-muted'}" 
+                  style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.35);"
+                  ${neuClickable ? `onclick="toggleEvidenceDrawer('${c.id}', 'neutral')"` : 'disabled'}
+                  title="${neuClickable ? 'Click to inspect neutral passages' : 'No neutral passages'}">
+            ○ ${neuCount} Neutral ${neuClickable ? '<span class="ev-chevron">▼</span>' : ''}
+          </button>
+        `;
+
+        const retBadge = `
+          <button id="ev-btn-${c.id}-all" 
+                  class="ev-badge-btn ${retClickable ? 'ev-badge-clickable' : 'ev-badge-muted'}" 
+                  style="background: #1e293b; color: #cbd5e1; border: 1px solid #334155;"
+                  ${retClickable ? `onclick="toggleEvidenceDrawer('${c.id}', 'all')"` : 'disabled'}
+                  title="${retClickable ? 'Click to inspect all retrieved passages' : 'No candidate passages'}">
+            📄 ${retCount} Retrieved ${retClickable ? '<span class="ev-chevron">▼</span>' : ''}
+          </button>
+        `;
+
+        claimsHtml += `
+          <div class="claim-item" id="claim-card-${c.id}">
+            <div class="claim-header">
+              <span class="badge" style="background: #334155; color: #cbd5e1;">TYPE: ${escapeHtml(c.claim_type)}</span>
+              <span class="badge ${badgeClass}">${verdict.toUpperCase()} (${confDisplay})</span>
+            </div>
+            <div class="claim-text">"${escapeHtml(c.original_text)}"</div>
+            
+            <div class="evidence-badges-row" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.6rem; align-items: center;">
+              ${supBadge}
+              ${contraBadge}
+              ${neuBadge}
+              ${retBadge}
+            </div>
+
+            <div class="claim-explanation" style="margin-top: 0.75rem;">
+              <strong>Evidence Rationale:</strong> ${res ? escapeHtml(res.explanation) : 'Analyzing literature...'}
+            </div>
+
+            <!-- EXPANDABLE EVIDENCE DRAWER -->
+            <div id="evidence-drawer-${c.id}" class="evidence-drawer" style="display: none;">
+              <div class="drawer-header">
+                <span id="evidence-drawer-title-${c.id}" style="display: flex; align-items: center; gap: 0.4rem;">
+                  🔍 Evidence Passages
+                </span>
+                <button class="drawer-close-btn" onclick="toggleEvidenceDrawer('${c.id}', null)">✕ Close</button>
+              </div>
+              <div id="evidence-drawer-passages-${c.id}"></div>
+            </div>
+          </div>
+        `;
+      });
+      document.getElementById('claims-container').innerHTML = claimsHtml || '<p>No claims found.</p>';
+
+      // 3. Reference Issues
+      const issuesResp = await fetch(`/api/v1/documents/${docId}/reference-issues`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const issuesData = await issuesResp.json();
+
+      let issuesHtml = '';
+      if (issuesData.issues.length > 0) {
+        issuesData.issues.forEach(i => {
+          issuesHtml += `
+            <div class="issue-alert">
+              <strong>🚨 ${i.issue_type.toUpperCase()} [${i.certainty}]:</strong> ${i.description}
+            </div>
+          `;
+        });
+      } else {
+        issuesHtml = '<p style="color: var(--success); font-weight: 500;">✓ All references verified. No retractions or broken DOIs detected in this manuscript.</p>';
+      }
+      document.getElementById('issues-container').innerHTML = issuesHtml;
+
+      // 4. Update Tab 4 Active Document Display
+      try {
+        const docInfoResp = await fetch(`/api/v1/documents`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (docInfoResp.ok) {
+          const docList = await docInfoResp.json();
+          const docObj = docList.documents.find(d => d.id === docId);
+          if (docObj) {
+            currentDocName = docObj.filename || docObj.title;
+            const el = document.getElementById('report-active-title');
+            if (el) el.innerText = currentDocName;
+          }
+        }
+      } catch (e) {}
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = String(text);
+      return div.innerHTML;
+    }
+
+    function toggleEvidenceDrawer(claimId, filterType) {
+      const drawerEl = document.getElementById(`evidence-drawer-${claimId}`);
+      if (!drawerEl) return;
+
+      window.claimDrawerStates = window.claimDrawerStates || {};
+      const current = window.claimDrawerStates[claimId];
+
+      // If user clicked close button or clicked the active badge again: collapse drawer
+      if (!filterType || (current && current.open && current.filter === filterType)) {
+        drawerEl.style.display = 'none';
+        window.claimDrawerStates[claimId] = { open: false, filter: null };
+        updateBadgeActiveStyles(claimId, null);
+        return;
+      }
+
+      // Switch filter or open drawer
+      window.claimDrawerStates[claimId] = { open: true, filter: filterType };
+      updateBadgeActiveStyles(claimId, filterType);
+      renderEvidenceDrawerContent(claimId, filterType);
+      drawerEl.style.display = 'block';
+    }
+
+    function updateBadgeActiveStyles(claimId, activeFilter) {
+      ['supporting', 'contradicting', 'neutral', 'all'].forEach(f => {
+        const btn = document.getElementById(`ev-btn-${claimId}-${f}`);
+        if (btn) {
+          if (f === activeFilter) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        }
+      });
+    }
+
+    function renderEvidenceDrawerContent(claimId, filterType) {
+      const res = window.verificationResultsMap ? window.verificationResultsMap[claimId] : null;
+      const container = document.getElementById(`evidence-drawer-passages-${claimId}`);
+      const titleEl = document.getElementById(`evidence-drawer-title-${claimId}`);
+      if (!container) return;
+
+      if (!res || !res.evidence || res.evidence.length === 0) {
+        container.innerHTML = '<p style="color: #64748b; font-size: 0.85rem; margin: 0; padding: 0.5rem 0;">No evidence passages available for this claim.</p>';
+        if (titleEl) titleEl.innerText = '🔍 Evidence Passages';
+        return;
+      }
+
+      let filtered = res.evidence;
+      let filterTitle = 'All Retrieved Evidence Passages';
+
+      if (filterType === 'supporting') {
+        filtered = res.evidence.filter(e => e.relation === 'supporting');
+        filterTitle = `Supporting Evidence Passages (${filtered.length})`;
+      } else if (filterType === 'contradicting') {
+        filtered = res.evidence.filter(e => e.relation === 'contradicting');
+        filterTitle = `Contradicting Evidence Passages (${filtered.length})`;
+      } else if (filterType === 'neutral') {
+        filtered = res.evidence.filter(e => e.relation === 'neutral');
+        filterTitle = `Neutral Contextual Passages (${filtered.length})`;
+      } else {
+        filterTitle = `All Retrieved Evidence Passages (${filtered.length})`;
+      }
+
+      if (titleEl) titleEl.innerText = `🔍 ${filterTitle}`;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<p style="color: #64748b; font-size: 0.85rem; margin: 0; padding: 0.5rem 0;">No ${filterType} passages found.</p>`;
+        return;
+      }
+
+      let html = '';
+      filtered.forEach((ev, idx) => {
+        const stance = (ev.relation || 'neutral').toLowerCase();
+        const stanceColor = stance === 'supporting' ? '#34d399' : (stance === 'contradicting' ? '#f87171' : '#94a3b8');
+        const stanceBg = stance === 'supporting' ? 'rgba(16, 185, 129, 0.15)' : (stance === 'contradicting' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(148, 163, 184, 0.15)');
+        const stanceBorder = stance === 'supporting' ? 'rgba(16, 185, 129, 0.3)' : (stance === 'contradicting' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(148, 163, 184, 0.3)');
+        const stanceLabel = stance.toUpperCase();
+
+        // Source metadata
+        const srcTitle = ev.source_title || (ev.passage && ev.passage.source ? ev.passage.source.title : 'Cited Academic Publication');
+        let authorList = ev.source_authors || [];
+        if ((!authorList || authorList.length === 0) && ev.passage && ev.passage.source && ev.passage.source.authors) {
+          authorList = ev.passage.source.authors;
+        }
+        const authorsStr = authorList && authorList.length > 0 ? authorList.slice(0, 3).join(', ') + (authorList.length > 3 ? ' et al.' : '') : '';
+        const pubYear = ev.source_year || (ev.passage && ev.passage.source ? ev.passage.source.publication_year : null);
+        const yearStr = pubYear ? ` (${pubYear})` : '';
+        const srcUrl = ev.source_url || (ev.passage && ev.passage.source ? ev.passage.source.source_url : null);
+        const srcDoi = ev.source_doi || (ev.passage && ev.passage.source ? ev.passage.source.doi : null);
+
+        let srcLinkHtml = '';
+        if (srcUrl) {
+          const isFallback = Boolean(
+            ev.is_search_fallback ||
+            srcUrl.includes('scholar.google.com') ||
+            srcUrl.includes('semanticscholar.org') ||
+            srcUrl.includes('/scholar?') ||
+            srcUrl.includes('/search?')
+          );
+          const linkLabel = isFallback ? 'Search Paper ↗' : 'Source URL ↗';
+          srcLinkHtml = `<a href="${srcUrl}" target="_blank" rel="noopener" style="color: #818cf8; text-decoration: underline; margin-left: 0.5rem; font-size: 0.75rem;">${linkLabel}</a>`;
+        } else if (srcDoi) {
+          const cleanDoi = srcDoi.trim().replace(/^(?:https?:\/\/(?:dx\.)?doi\.org\/|doi:\s*)/i, '').replace(/[.,;)>\]]+$/, '');
+          const isStandardDoi = /^10\.\d{4,9}\/[-._;()/:A-Za-z0-9]+$/.test(cleanDoi) &&
+            !cleanDoi.toLowerCase().includes('broken.doi') &&
+            !cleanDoi.toLowerCase().includes('never.existed');
+          if (isStandardDoi) {
+            srcLinkHtml = `<a href="https://doi.org/${encodeURIComponent(cleanDoi)}" target="_blank" rel="noopener" style="color: #818cf8; text-decoration: underline; margin-left: 0.5rem; font-size: 0.75rem;">Source URL ↗</a>`;
+          } else {
+            let cleanQueryTitle = (srcTitle || cleanDoi || '').trim();
+            cleanQueryTitle = cleanQueryTitle.replace(/^[•\s\-\*\[\]\d\.]+/g, '').trim();
+            cleanQueryTitle = cleanQueryTitle.split(/\s+(?:In\s+Proceedings|In\s+Advances|In\s+Proc\.|arXiv|pages\s+\d+|pp\.\s*\d+)/i)[0].trim();
+            cleanQueryTitle = cleanQueryTitle.split(/\s+/).slice(0, 14).join(' ');
+            const query = encodeURIComponent(cleanQueryTitle);
+            srcLinkHtml = `<a href="https://scholar.google.com/scholar?q=${query}" target="_blank" rel="noopener" style="color: #818cf8; text-decoration: underline; margin-left: 0.5rem; font-size: 0.75rem;">Search Paper ↗</a>`;
+          }
+        } else if (srcTitle) {
+          let cleanQueryTitle = (srcTitle || '').trim();
+          cleanQueryTitle = cleanQueryTitle.replace(/^[•\s\-\*\[\]\d\.]+/g, '').trim();
+          cleanQueryTitle = cleanQueryTitle.split(/\s+(?:In\s+Proceedings|In\s+Advances|In\s+Proc\.|arXiv|pages\s+\d+|pp\.\s*\d+)/i)[0].trim();
+          cleanQueryTitle = cleanQueryTitle.split(/\s+/).slice(0, 14).join(' ');
+          const query = encodeURIComponent(cleanQueryTitle);
+          srcLinkHtml = `<a href="https://scholar.google.com/scholar?q=${query}" target="_blank" rel="noopener" style="color: #818cf8; text-decoration: underline; margin-left: 0.5rem; font-size: 0.75rem;">Search Paper ↗</a>`;
+        }
+
+        // Snippet text
+        const textSnippet = ev.passage_text || (ev.passage ? ev.passage.passage_text : '');
+
+        // Score display
+        const scoreVal = ev.relevance_score !== null && ev.relevance_score !== undefined 
+          ? `${(ev.relevance_score * 100).toFixed(0)}% Match` 
+          : 'N/A';
+
+        html += `
+          <div class="passage-card stance-${stance}">
+            <div class="passage-meta">
+              <div>
+                <span class="badge" style="background: ${stanceBg}; color: ${stanceColor}; border: 1px solid ${stanceBorder}; font-size: 0.72rem; padding: 0.15rem 0.5rem; text-transform: uppercase;">
+                  ${stanceLabel}
+                </span>
+                <span class="passage-source-title" style="margin-left: 0.4rem;">${escapeHtml(srcTitle)}</span>
+                ${srcLinkHtml}
+                ${authorsStr ? `<div class="passage-source-authors">👤 ${escapeHtml(authorsStr)}${yearStr}</div>` : ''}
+              </div>
+              <span class="passage-score-badge">Relevance: <strong>${scoreVal}</strong></span>
+            </div>
+            <div class="passage-snippet">"${escapeHtml(textSnippet)}"</div>
+            ${ev.rationale ? `<div class="passage-rationale-note">💡 ${escapeHtml(ev.rationale)}</div>` : ''}
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    let currentDocName = null;
+
+    // Report download with full authentication and instant client-side trigger
+    async function downloadReport(fmt) {
+      const btn = event ? event.target : null;
+      const originalText = btn ? btn.innerText : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = '⏳ Generating Audit Report...';
+      }
+
+      try {
+        const token = await ensureAuth();
+
+        // If no document is selected, automatically select the most recent verified document
+        if (!currentDocId) {
+          const docsResp = await fetch('/api/v1/documents', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (docsResp.ok) {
+            const docsData = await docsResp.json();
+            if (docsData.documents && docsData.documents.length > 0) {
+              currentDocId = docsData.documents[0].id;
+              currentDocName = docsData.documents[0].filename || docsData.documents[0].title;
+              const el = document.getElementById('report-active-title');
+              if (el) el.innerText = currentDocName;
+            }
+          }
+        }
+
+        if (!currentDocId) {
+          alert('No verified document found. Please submit or select a paper in Tab 1 first.');
+          return;
+        }
+
+        // 1. Request report generation from backend
+        const repResp = await fetch(`/api/v1/documents/${currentDocId}/reports`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ format: fmt })
+        });
+
+        if (!repResp.ok) {
+          const err = await repResp.json().catch(() => ({}));
+          alert(`Report generation failed: ${err.detail || 'Server error'}`);
+          return;
+        }
+
+        const repData = await repResp.json();
+        if (btn) btn.innerText = '📥 Downloading Certificate...';
+
+        // 2. Fetch the generated report file bytes with authentication
+        const dlResp = await fetch(`/api/v1/reports/${repData.id}/download`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!dlResp.ok) {
+          // Fallback to direct navigation with query token
+          window.location.href = `/api/v1/reports/${repData.id}/download?token=${encodeURIComponent(token)}`;
+          return;
+        }
+
+        const blob = await dlResp.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = blobUrl;
+        const cleanName = (currentDocName || 'manuscript').replace(/\.[^/.]+$/, '');
+        a.download = `ANVEXA_Verification_Audit_${cleanName}.${fmt}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(blobUrl);
+        a.remove();
+
+        if (btn) {
+          btn.innerText = '✓ Downloaded Successfully!';
+          setTimeout(() => {
+            btn.disabled = false;
+            btn.innerText = originalText;
+          }, 3000);
+        }
+
+      } catch (err) {
+        console.error('Download error:', err);
+        alert('An unexpected error occurred while exporting the report.');
+      } finally {
+        if (btn && btn.innerText !== '✓ Downloaded Successfully!') {
+          btn.disabled = false;
+          btn.innerText = originalText;
+        }
+      }
+    }
+
+    // ==========================================
+    // Progressive Web App (PWA) Lifecycle & Install
+    // ==========================================
+    let deferredPwaPrompt = null;
+
+    // 1. Register Service Worker for offline support & PWA installability
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('[PWA] Service Worker registered with scope:', registration.scope);
+          })
+          .catch((err) => {
+            console.warn('[PWA] Service Worker registration failed:', err);
+          });
+      });
+    }
+
+    // 2. Capture 'beforeinstallprompt' event (Android Chrome/Edge, PC/Mac Chrome/Edge)
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPwaPrompt = e;
+      const installBtn = document.getElementById('pwa-install-btn');
+      if (installBtn && !isAppInstalled()) {
+        installBtn.style.display = 'inline-flex';
+      }
+      const nativeContainer = document.getElementById('pwa-native-prompt-container');
+      if (nativeContainer) {
+        nativeContainer.style.display = 'block';
+      }
+      console.log('[PWA] beforeinstallprompt event captured and ready');
+    });
+
+    // 3. Detect iOS and standalone status on page load
+    function isAppInstalled() {
+      return window.matchMedia('(display-mode: standalone)').matches ||
+             window.navigator.standalone === true ||
+             document.referrer.includes('android-app://');
+    }
+
+    function isIosDevice() {
+      return /iPhone|iPad|iPod/.test(navigator.userAgent) && !window.MSStream;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const installBtn = document.getElementById('pwa-install-btn');
+      if (!installBtn) return;
+
+      if (isAppInstalled()) {
+        installBtn.style.display = 'none';
+      } else if (isIosDevice()) {
+        // On iOS Safari, beforeinstallprompt does not fire, but user can install via Share > Add to Home Screen
+        installBtn.style.display = 'inline-flex';
+        const txt = document.getElementById('pwa-install-btn-text');
+        if (txt) txt.innerText = 'Add App 📲';
+      } else {
+        // Show on desktop / Android so user can always open the install dialog
+        setTimeout(() => {
+          if (!isAppInstalled()) {
+            installBtn.style.display = 'inline-flex';
+          }
+        }, 1200);
+      }
+    });
+
+    // 4. Trigger Install (either native browser prompt or guide modal)
+    function triggerPwaInstall() {
+      if (deferredPwaPrompt) {
+        triggerNativeInstallPrompt();
+      } else {
+        openPwaModal();
+      }
+    }
+
+    function triggerNativeInstallPrompt() {
+      if (!deferredPwaPrompt) {
+        openPwaModal();
+        return;
+      }
+      deferredPwaPrompt.prompt();
+      deferredPwaPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('[PWA] User accepted the installation');
+          closePwaModal();
+          const installBtn = document.getElementById('pwa-install-btn');
+          if (installBtn) installBtn.style.display = 'none';
+        } else {
+          console.log('[PWA] User dismissed the installation');
+        }
+        deferredPwaPrompt = null;
+      });
+    }
+
+    // 5. Modal open / close handlers
+    function openPwaModal() {
+      const modal = document.getElementById('pwa-install-modal');
+      if (modal) modal.style.display = 'flex';
+      const nativeContainer = document.getElementById('pwa-native-prompt-container');
+      if (nativeContainer) {
+        nativeContainer.style.display = deferredPwaPrompt ? 'block' : 'none';
+      }
+    }
+
+    function closePwaModal() {
+      const modal = document.getElementById('pwa-install-modal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    // 6. Listen for successful installation
+    window.addEventListener('appinstalled', (evt) => {
+      console.log('[PWA] ANVEXA AI was installed successfully!');
+      const installBtn = document.getElementById('pwa-install-btn');
+      if (installBtn) installBtn.style.display = 'none';
+      closePwaModal();
+    });
+  </script>
+
+</body>
+</html>

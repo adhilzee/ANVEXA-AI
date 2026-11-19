@@ -31,7 +31,7 @@ def list_document_claims(
     document_id: UUID,
     claim_type: ClaimType | None = Query(default=None),
     page: int = Query(default=1, ge=1),
-    per_page: int = Query(default=50, ge=1, le=100),
+    per_page: int = Query(default=100, ge=1, le=1000),
     search: str | None = Query(default=None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),

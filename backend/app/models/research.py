@@ -182,8 +182,8 @@ class EvidencePassage(Base, UUIDPrimaryKey, TimestampMixin):
 
     source: Mapped[ResearchSource] = relationship(
         secondary="source_versions",
-        primaryjoin="ResearchSource.id == SourceVersion.source_id",
-        secondaryjoin="SourceVersion.id == EvidencePassage.source_version_id",
+        primaryjoin="EvidencePassage.source_version_id == SourceVersion.id",
+        secondaryjoin="SourceVersion.source_id == ResearchSource.id",
         viewonly=True,
     )
     source_version: Mapped[SourceVersion] = relationship(

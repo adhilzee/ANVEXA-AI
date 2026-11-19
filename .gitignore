@@ -1,3 +1,4 @@
+# Environment & secrets
 .env
 .env.*
 !.env.example
@@ -8,13 +9,43 @@
 id_rsa
 id_ed25519
 
+# Dependencies & virtual environments
 node_modules/
 dist/
 build/
-coverage/
-__pycache__/
-*.py[cod]
 .venv/
 **/.venv/
 venv/
+ENV/
+env/
 
+# Python cache & build
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+
+# Testing & coverage
+.pytest_cache/
+.coverage
+coverage/
+htmlcov/
+*.cover
+*.log
+
+# Databases & runtime storage
+*.db
+*.sqlite
+*.sqlite3
+anvexa_demo.db
+storage/*
+!storage/.gitkeep
+
+# IDEs & OS files
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db

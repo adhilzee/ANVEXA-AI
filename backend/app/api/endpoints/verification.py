@@ -4,14 +4,15 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from backend.app.api.dependencies import get_current_user, verify_resource_ownership
 from backend.app.database.session import get_db
 from backend.app.models.document import Claim, Document, DocumentVersion
 from backend.app.models.enums import DocumentStatus, Verdict
+from backend.app.models.research import EvidencePassage
 from backend.app.models.user import User
-from backend.app.models.verification import ProcessingJob, ReferenceIssue, VerificationResult
+from backend.app.models.verification import ProcessingJob, ReferenceIssue, VerificationEvidence, VerificationResult
 from backend.app.schemas.verification import (
     DocumentVerificationSummary,
     ProcessingJobResponse,
@@ -63,11 +64,10 @@ def get_verification_summary(
     verify_resource_ownership(doc.user_id, current_user)
 
     version = db.execute(
-        select(DocumentVersion).where(
-            DocumentVersion.document_id == doc.id,
-            DocumentVersion.version_number == 1,
-        )
-    ).scalar_one_or_none()
+        select(DocumentVersion)
+        .where(DocumentVersion.document_id == doc.id)
+        .order_by(DocumentVersion.version_number.desc())
+    ).scalars().first()
 
     if version is None:
         return DocumentVerificationSummary(
@@ -168,11 +168,10 @@ def list_verification_results(
     verify_resource_ownership(doc.user_id, current_user)
 
     version = db.execute(
-        select(DocumentVersion).where(
-            DocumentVersion.document_id == doc.id,
-            DocumentVersion.version_number == 1,
-        )
-    ).scalar_one_or_none()
+        select(DocumentVersion)
+        .where(DocumentVersion.document_id == doc.id)
+        .order_by(DocumentVersion.version_number.desc())
+    ).scalars().first()
 
     if version is None:
         return []
@@ -180,6 +179,11 @@ def list_verification_results(
     results = db.execute(
         select(VerificationResult)
         .where(VerificationResult.document_version_id == version.id)
+        .options(
+            selectinload(VerificationResult.evidence)
+            .selectinload(VerificationEvidence.evidence_passage)
+            .selectinload(EvidencePassage.source)
+        )
         .order_by(VerificationResult.created_at.asc())
     ).scalars().all()
 

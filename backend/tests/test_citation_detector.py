@@ -72,6 +72,12 @@ def test_extract_doi():
     cit = "Vaswani, A. et al. Attention is All You Need. NeurIPS 2017. doi: 10.1000/182"
     assert extract_doi(cit) == "10.1000/182"
     assert extract_doi("No DOI present") is None
+    # Test trailing punctuation and newline sanitization
+    assert extract_doi("doi: 10.1000/182.\n") == "10.1000/182"
+    assert extract_doi("10.1000/182,") == "10.1000/182"
+    assert extract_doi("10.1000/182;") == "10.1000/182"
+    assert extract_doi("(10.1000/182)") == "10.1000/182"
+    assert extract_doi("[10.1000/182]") == "10.1000/182"
 
 
 def test_parse_bibliography_section():
@@ -149,3 +155,38 @@ def test_process_and_link_citations_service(citation_db_session: Session):
     assert len(links) == 1
     assert links[0].claim_id == claim.id
     assert links[0].citation_id == citations[0].id
+
+
+def test_extract_doi_strips_trailing_punctuation():
+    # Test various punctuation trailing extracted DOIs
+    cases = [
+        ("doi: 10.18653/v1/P17-1171.", "10.18653/v1/P17-1171"),
+        ("See reference 10.18653/v1/P17-1171'.", "10.18653/v1/P17-1171"),
+        ("Nature article (10.1038/nature14539),", "10.1038/nature14539"),
+        ("ACM paper 10.1145/3097983.3098194')", "10.1145/3097983.3098194"),
+        ("Cell reference [10.1016/j.cell.2021.01.001]", "10.1016/j.cell.2021.01.001"),
+        ("Dataset {10.1016/j.cell.2021.01.001}", "10.1016/j.cell.2021.01.001"),
+        ("Source DOI: 10.1016/j.cell.2021.01.001:", "10.1016/j.cell.2021.01.001"),
+        ("Entry; 10.1016/j.cell.2021.01.001;", "10.1016/j.cell.2021.01.001"),
+        ("Quoted '10.18653/v1'.", "10.18653/v1"),
+    ]
+    for raw, expected in cases:
+        assert extract_doi(raw) == expected
+
+    # Bibliography entry parsing
+    entry = parse_bibliography_entry("[1] Chen et al. Reading Wikipedia. doi: 10.18653/v1/P17-1171.")
+    assert entry.doi == "10.18653/v1/P17-1171"
+    assert not entry.doi.endswith(".")
+
+    # Test ACL Anthology DOI ending with punctuation is valid and not broken
+    from backend.app.core.doi_utils import validate_doi_format
+    acl_entry = parse_bibliography_entry("[2] Lewis et al. RAG. doi: 10.18653/v1'.")
+    assert acl_entry.doi == "10.18653/v1"
+    assert validate_doi_format(acl_entry.doi) is True
+
+    # Audit citation issues: valid ACL DOI must not produce BROKEN_DOI
+    from backend.app.services.source_retriever.retriever import audit_citation_for_issues, fetch_source_metadata
+    from backend.app.models.enums import ReferenceIssueType
+    source = fetch_source_metadata(acl_entry.doi, "RAG Paper")
+    issues = audit_citation_for_issues("Reference text", 2020, acl_entry.doi, source)
+    assert not any(i.issue_type == ReferenceIssueType.BROKEN_DOI for i in issues)

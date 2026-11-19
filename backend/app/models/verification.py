@@ -23,6 +23,12 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship, synonym
 
+from backend.app.core.doi_utils import (
+    check_doi_resolves,
+    resolve_safe_source_url,
+    sanitize_doi,
+    validate_doi_format,
+)
 from backend.app.database.base import Base
 from backend.app.models.enums import (
     ConfidenceLabel,
@@ -119,6 +125,22 @@ class VerificationResult(Base, UUIDPrimaryKey, TimestampMixin):
         back_populates="verification_result"
     )
 
+    @property
+    def supporting_count(self) -> int:
+        return sum(1 for e in self.evidence if e.relation == EvidenceRelation.SUPPORTING)
+
+    @property
+    def contradicting_count(self) -> int:
+        return sum(1 for e in self.evidence if e.relation == EvidenceRelation.CONTRADICTING)
+
+    @property
+    def neutral_count(self) -> int:
+        return sum(1 for e in self.evidence if e.relation == EvidenceRelation.NEUTRAL)
+
+    @property
+    def retrieved_count(self) -> int:
+        return len(self.evidence)
+
 
 class VerificationEvidence(Base, UUIDPrimaryKey):
     __tablename__ = "verification_evidence"
@@ -159,6 +181,88 @@ class VerificationEvidence(Base, UUIDPrimaryKey):
     evidence_passage: Mapped[EvidencePassage] = relationship(
         back_populates="verification_evidence"
     )
+
+    @property
+    def passage(self) -> EvidencePassage | None:
+        return self.evidence_passage
+
+    @property
+    def passage_text(self) -> str:
+        return self.evidence_passage.passage_text if self.evidence_passage else ""
+
+    @property
+    def source_title(self) -> str | None:
+        if self.evidence_passage:
+            src = self.evidence_passage.source or (self.evidence_passage.source_version.source if self.evidence_passage.source_version else None)
+            if src:
+                return src.title
+        return None
+
+    @property
+    def source_authors(self) -> list[str]:
+        if self.evidence_passage:
+            src = self.evidence_passage.source or (self.evidence_passage.source_version.source if self.evidence_passage.source_version else None)
+            if src and src.authors:
+                return src.authors
+        return []
+
+    @property
+    def source_year(self) -> int | None:
+        if self.evidence_passage:
+            src = self.evidence_passage.source or (self.evidence_passage.source_version.source if self.evidence_passage.source_version else None)
+            if src:
+                return src.publication_year
+        return None
+
+    @property
+    def source_url(self) -> str | None:
+        if self.evidence_passage:
+            src = self.evidence_passage.source or (
+                self.evidence_passage.source_version.source
+                if self.evidence_passage.source_version
+                else None
+            )
+            if src:
+                url, _ = resolve_safe_source_url(
+                    raw_url=src.source_url,
+                    raw_doi=src.doi,
+                    title=src.title,
+                    fallback_text=self.evidence_passage.passage_text,
+                )
+                return url
+        return None
+
+    @property
+    def is_search_fallback(self) -> bool:
+        if self.evidence_passage:
+            src = self.evidence_passage.source or (
+                self.evidence_passage.source_version.source
+                if self.evidence_passage.source_version
+                else None
+            )
+            if src:
+                _, is_fallback = resolve_safe_source_url(
+                    raw_url=src.source_url,
+                    raw_doi=src.doi,
+                    title=src.title,
+                    fallback_text=self.evidence_passage.passage_text,
+                )
+                return is_fallback
+        return False
+
+    @property
+    def source_doi(self) -> str | None:
+        if self.evidence_passage:
+            src = self.evidence_passage.source or (
+                self.evidence_passage.source_version.source
+                if self.evidence_passage.source_version
+                else None
+            )
+            if src and src.doi:
+                clean_doi = sanitize_doi(src.doi)
+                if clean_doi and check_doi_resolves(clean_doi):
+                    return clean_doi
+        return None
 
 
 class ReferenceIssue(Base, UUIDPrimaryKey, TimestampMixin):

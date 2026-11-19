@@ -15,9 +15,12 @@ from backend.app.models.document import Document
 from backend.app.models.enums import DocumentStatus
 from backend.app.models.user import User
 from backend.app.services.document_parser.parser import (
+    dehyphenate_text,
+    normalize_text,
     parse_docx,
     parse_document,
     parse_pdf,
+    strip_abstract_front_matter,
 )
 from backend.app.services.document_parser.service import process_document_parsing
 from backend.app.services.document_storage.storage_service import StorageBackend
@@ -133,3 +136,31 @@ def test_process_document_parsing_service(parser_db_session: Session):
     assert version.document_id == doc.id
     assert len(pages) >= 1
     assert "Section 1" in pages[0].extracted_text
+
+
+def test_dehyphenate_text_preserves_compound_words():
+    raw_text = (
+        "Models were evaluated on down- stream tasks to test their knowl- edge. "
+        "The state-of-the-art pre-trained architecture achieved 98.5% accuracy."
+    )
+    cleaned = dehyphenate_text(raw_text)
+    assert "downstream" in cleaned
+    assert "knowledge" in cleaned
+    assert "down- stream" not in cleaned
+    assert "knowl- edge" not in cleaned
+    # Ensure legitimate hyphenated compound words stay intact
+    assert "state-of-the-art" in cleaned
+    assert "pre-trained" in cleaned
+
+
+def test_strip_abstract_front_matter_in_parser():
+    header_text = (
+        "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks "
+        "Patrick Lewis†‡, Ethan Perez⋆, plewis@fb.com Abstract "
+        "Large pre-trained language models have been shown to store factual knowledge."
+    )
+    stripped = strip_abstract_front_matter(header_text)
+    assert stripped.startswith("Large pre-trained language models")
+    assert "Patrick Lewis" not in stripped
+    assert "plewis@fb.com" not in stripped
+    assert "Abstract" not in stripped

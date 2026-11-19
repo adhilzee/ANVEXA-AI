@@ -1,0 +1,56 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /Resources << /Font << /F1 4 0 R >> >> /MediaBox [0 0 612 792] /Contents 5 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Length 1241 >>
+stream
+BT
+/F1 10 Tf
+45 740 Td
+13 TL
+(Thermodynamic Constraints and Energetic Costs of Direct Air Carbon Capture) '
+(Prof. Julian Sterling, Department of Chemical Engineering, MIT) '
+T*
+(Abstract) '
+(Direct Air Capture \(DAC\) systems face strict energetic limits imposed by the second law of thermodynamics.) '
+(This evaluation calculates minimum theoretical work requirements for ambient atmospheric CO2 extraction.) '
+T*
+(1. Introduction) '
+(Minimum theoretical work required to separate CO2 from ambient air at 415 ppm is approximately 20 kJ per mole.) '
+(Operating energetic consumption in prototype contactors exceeds thermodynamic minimums by over 300% [1].) '
+(Electrochemical regeneration methods demonstrate a 25% improvement in thermal efficiency over solvent systems [1].) '
+(Global direct air capture capacity grew from 10 kilotons in 2020 to over 150 kilotons in 2024.) '
+T*
+(2. Discussion) '
+(Capital expenditure remains high, averaging $450 per ton of net captured carbon dioxide.) '
+(Transitioning to solid sorbent hollow fiber contactors reduced parasitic regeneration loads by 35% [1].) '
+T*
+(References) '
+([1] Vaswani, A. et al. Scalable Energy Systems and Transformer Architectures. Nature 2017. doi: 10.1038/nature14539) '
+ET
+
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000311 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1604
+%%EOF

@@ -25,6 +25,13 @@ class VerificationEvidenceItem(BaseModel):
     relation: EvidenceRelation
     relevance_score: float | None = None
     rationale: str | None = None
+    passage_text: str | None = None
+    source_title: str | None = None
+    source_authors: list[str] = Field(default_factory=list)
+    source_year: int | None = None
+    source_url: str | None = None
+    source_doi: str | None = None
+    is_search_fallback: bool = False
     passage: EvidencePassageResponse | None = None
 
 
@@ -44,6 +51,10 @@ class VerificationResultResponse(BaseModel):
     model_version: str | None = None
     verified_at: datetime
     evidence: list[VerificationEvidenceItem] = Field(default_factory=list)
+    supporting_count: int = 0
+    contradicting_count: int = 0
+    neutral_count: int = 0
+    retrieved_count: int = 0
 
 
 class ProcessingJobResponse(BaseModel):

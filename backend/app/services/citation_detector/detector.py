@@ -3,9 +3,14 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import re
 
+from backend.app.core.doi_utils import (
+    resolve_safe_source_url,
+    sanitize_doi,
+    validate_doi_format,
+)
 from backend.app.models.enums import CitationStyle
 
-DOI_REGEX = re.compile(r"\b(10\.\d{4,9}/[-._;()/:A-Za-z0-9]+)", re.IGNORECASE)
+DOI_REGEX = re.compile(r"\b(10\.\d{4,9}/[^\s<>]+)", re.IGNORECASE)
 URL_REGEX = re.compile(r"https?://[^\s)\]\"'>]+", re.IGNORECASE)
 YEAR_REGEX = re.compile(r"\b(19\d{2}|20\d{2})\b")
 
@@ -95,11 +100,10 @@ def detect_in_text_citations(text: str) -> list[DetectedInTextCitation]:
 
 
 def extract_doi(text: str) -> str | None:
-    """Extract and normalize clean DOI."""
+    """Extract, sanitize, and normalize clean DOI."""
     match = DOI_REGEX.search(text)
     if match:
-        doi = match.group(1).rstrip(".,;)>]")
-        return doi.lower()
+        return sanitize_doi(match.group(1))
     return None
 
 
@@ -107,7 +111,7 @@ def extract_url(text: str) -> str | None:
     """Extract URL from citation string."""
     match = URL_REGEX.search(text)
     if match:
-        return match.group(0).rstrip(".,;)>]")
+        return match.group(0).rstrip(".,;:'\")\\]}>/ ")
     return None
 
 
@@ -165,6 +169,11 @@ def parse_bibliography_entry(raw_entry: str, index: int = 1) -> ParsedBibliograp
 
     if not title:
         title = entry_clean[:120]
+
+    # Ensure URL is safe; fall back to paper title search if missing or DOI is invalid/broken
+    safe_url, _ = resolve_safe_source_url(raw_url=url, raw_doi=doi, title=title)
+    if not url or (url and "doi.org" in url and not validate_doi_format(doi or extract_doi(url))):
+        url = safe_url
 
     return ParsedBibliographyEntry(
         raw_text=entry_clean,

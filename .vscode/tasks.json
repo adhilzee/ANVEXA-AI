@@ -13,10 +13,7 @@
         "${workspaceFolder}\\scripts\\auto-sync.ps1"
       ],
       "isBackground": true,
-      "problemMatcher": [],
-      "runOptions": {
-        "runOn": "folderOpen"
-      }
+      "problemMatcher": []
     }
   ]
 }

@@ -7,7 +7,12 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from backend.app.models.document import Claim, ClaimCitation, Citation, DocumentVersion
-from backend.app.models.enums import ReferenceIssueType, Verdict, VerificationStatus
+from backend.app.models.enums import (
+    EvidenceRelation,
+    ReferenceIssueType,
+    Verdict,
+    VerificationStatus,
+)
 from backend.app.models.research import EvidencePassage, ResearchSource
 from backend.app.models.verification import ReferenceIssue, VerificationEvidence, VerificationResult
 from backend.app.services.evidence_engine.service import retrieve_relevant_passages_for_claim
@@ -57,6 +62,8 @@ def verify_single_claim(
             claim_text=f"{claim.original_text} {claim.context_text or ''}",
             passage_text=passage.passage_text,
             passage_id=str(passage.id),
+            relevance_score=rel_score,
+            source_id=str(passage.source_id) if passage.source_id else "",
         )
         evaluations.append(eval_item)
         passage_map[str(passage.id)] = passage
@@ -66,6 +73,7 @@ def verify_single_claim(
         evaluations=evaluations,
         is_source_retracted=is_retracted,
         has_broken_reference=has_broken_ref,
+        requires_external_verification=claim.requires_external_verification,
     )
 
     # Persist VerificationResult
@@ -84,7 +92,7 @@ def verify_single_claim(
     db.add(result)
     db.flush()
 
-    # Link VerificationEvidence
+    # Link VerificationEvidence for all evaluated retrieved passages
     for eval_item in decision.evidence_evaluations:
         passage = passage_map.get(eval_item.passage_id)
         if passage:

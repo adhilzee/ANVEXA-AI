@@ -4,6 +4,8 @@ import csv
 from datetime import datetime, timezone
 import io
 import logging
+import re
+import textwrap
 from uuid import UUID, uuid4
 
 from sqlalchemy import select
@@ -17,6 +19,172 @@ from backend.app.services.document_service import get_storage_backend
 from backend.app.services.document_storage.storage_service import StorageBackend
 
 logger = logging.getLogger(__name__)
+
+# Transliteration mapping for mathematical and non-ASCII scientific characters
+UNICODE_TRANSLITERATION_MAP = {
+    "∑": "sum",
+    "∏": "prod",
+    "∈": "in",
+    "∉": "not in",
+    "∋": "contains",
+    "⊆": "subset_eq",
+    "⊂": "subset",
+    "⊇": "superset_eq",
+    "⊃": "superset",
+    "∪": "union",
+    "∩": "intersect",
+    "∅": "empty_set",
+    "∀": "for all",
+    "∃": "exists",
+    "∄": "not exists",
+    "≤": "<=",
+    "≥": ">=",
+    "≠": "!=",
+    "≈": "~=",
+    "≡": "==",
+    "±": "+/-",
+    "∓": "-/+",
+    "×": "x",
+    "÷": "/",
+    "√": "sqrt",
+    "∞": "infinity",
+    "∫": "integral",
+    "∂": "partial",
+    "∇": "grad",
+    "∆": "delta",
+    "Δ": "Delta",
+    "α": "alpha",
+    "β": "beta",
+    "γ": "gamma",
+    "Γ": "Gamma",
+    "δ": "delta",
+    "ε": "epsilon",
+    "θ": "theta",
+    "λ": "lambda",
+    "Λ": "Lambda",
+    "μ": "mu",
+    "π": "pi",
+    "Π": "Pi",
+    "σ": "sigma",
+    "Σ": "Sigma",
+    "τ": "tau",
+    "φ": "phi",
+    "ω": "omega",
+    "Ω": "Omega",
+    "→": "->",
+    "←": "<-",
+    "↔": "<->",
+    "⇒": "=>",
+    "⇐": "<=",
+    "⇔": "<=>",
+    "†": "*",
+    "‡": "**",
+    "⋆": "*",
+    "•": "*",
+    "·": "*",
+    "…": "...",
+    "–": "-",
+    "—": "--",
+    "’": "'",
+    "‘": "'",
+    "“": '"',
+    "”": '"',
+    "′": "'",
+    "″": '"',
+    "ﬁ": "fi",
+    "ﬂ": "fl",
+    "ﬀ": "ff",
+    "ﬃ": "ffi",
+    "ﬄ": "ffl",
+}
+
+
+def sanitize_pdf_text(text: str) -> str:
+    """Sanitize and transliterate mathematical and special Unicode symbols
+    into standard ASCII/Latin-1 equivalents so math symbols do not render as '?' in the PDF.
+    """
+    if not text:
+        return ""
+    for symbol, rep in UNICODE_TRANSLITERATION_MAP.items():
+        text = text.replace(symbol, rep)
+    # Strip any remaining unencodable non-latin-1 characters
+    return text.encode("latin-1", errors="ignore").decode("latin-1")
+
+
+def _build_pdf_document(lines: list[str], max_lines_per_page: int = 50) -> bytes:
+    """Build a compliant multi-page PDF document with text wrapping, sanitization, and xref table."""
+    pages_lines: list[list[str]] = []
+    current_page: list[str] = []
+    for line in lines:
+        current_page.append(line)
+        if len(current_page) >= max_lines_per_page:
+            pages_lines.append(current_page)
+            current_page = []
+    if current_page or not pages_lines:
+        pages_lines.append(current_page)
+
+    num_pages = len(pages_lines)
+    font_obj_id = 3 + num_pages
+    first_stream_id = font_obj_id + 1
+
+    kids_str = " ".join(f"{3 + i} 0 R" for i in range(num_pages))
+    parts: list[bytes] = []
+    offsets: list[int] = []
+    current_offset = 0
+
+    def add_obj(obj_data: str | bytes) -> None:
+        nonlocal current_offset
+        offsets.append(current_offset)
+        b = obj_data.encode("latin-1") if isinstance(obj_data, str) else obj_data
+        parts.append(b)
+        current_offset += len(b)
+
+    header = b"%PDF-1.4\n"
+    parts.append(header)
+    current_offset += len(header)
+
+    # 1: Catalog
+    add_obj("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n")
+    # 2: Pages
+    add_obj(f"2 0 obj\n<< /Type /Pages /Kids [{kids_str}] /Count {num_pages} >>\nendobj\n")
+    # Page objects
+    for i in range(num_pages):
+        stream_id = first_stream_id + i
+        add_obj(
+            f"{3 + i} 0 obj\n<< /Type /Page /Parent 2 0 R /Resources << /Font << /F1 {font_obj_id} 0 R >> >> /MediaBox [0 0 612 792] /Contents {stream_id} 0 R >>\nendobj\n"
+        )
+    # Font object
+    add_obj(f"{font_obj_id} 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>\nendobj\n")
+
+    # Content streams
+    for i, p_lines in enumerate(pages_lines):
+        stream_id = first_stream_id + i
+        stream_content = "BT /F1 10 Tf 50 750 Td 12 TL\n"
+        for line in p_lines:
+            # Standardize [Page X] formatting so typos like '(Page 16' or '(Page 16)' never appear
+            if "Page" in line and "Claim #" in line:
+                line = re.sub(r"[\(\[]Page\s+(\d+)\)?", r"[Page \1]", line)
+            sanitized = sanitize_pdf_text(line)
+            safe = sanitized.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+            stream_content += f"({safe}) '\n"
+        stream_content += "ET\n"
+        s_bytes = stream_content.encode("latin-1", errors="replace")
+        stream_obj = (
+            f"{stream_id} 0 obj\n<< /Length {len(s_bytes)} >>\nstream\n".encode("ascii")
+            + s_bytes
+            + b"\nendstream\nendobj\n"
+        )
+        add_obj(stream_obj)
+
+    startxref = current_offset
+    total_objs = first_stream_id + num_pages
+    xref = f"xref\n0 {total_objs}\n0000000000 65535 f \n"
+    for off in offsets:
+        xref += f"{off:010d} 00000 n \n"
+    trailer = f"trailer\n<< /Size {total_objs} /Root 1 0 R >>\nstartxref\n{startxref}\n%%EOF"
+    parts.append(xref.encode("ascii") + trailer.encode("ascii"))
+
+    return b"".join(parts)
 
 
 def generate_csv_report_data(
@@ -56,6 +224,10 @@ def generate_csv_report_data(
         "Verdict",
         "Confidence",
         "Confidence Score",
+        "Supporting Count",
+        "Contradicting Count",
+        "Neutral Count",
+        "Total Retrieved",
         "AI Explanation",
     ])
 
@@ -64,6 +236,10 @@ def generate_csv_report_data(
         verdict = res.verdict.value if res else "unverified"
         conf = res.confidence.value if res and res.confidence else "n/a"
         score = f"{res.confidence_score:.2f}" if res and res.confidence_score is not None else "n/a"
+        sup_cnt = res.supporting_count if res else 0
+        contra_cnt = res.contradicting_count if res else 0
+        neu_cnt = res.neutral_count if res else 0
+        ret_cnt = res.retrieved_count if res else 0
         explanation = res.explanation if res else ""
 
         writer.writerow([
@@ -75,6 +251,10 @@ def generate_csv_report_data(
             verdict,
             conf,
             score,
+            sup_cnt,
+            contra_cnt,
+            neu_cnt,
+            ret_cnt,
             explanation,
         ])
 
@@ -130,49 +310,33 @@ def generate_pdf_report_data(
         "DETAILED VERIFICATION RESULTS (SAMPLE):",
     ])
 
-    for idx, c in enumerate(claims[:10], start=1):
+    for idx, c in enumerate(claims[:15], start=1):
         res = results_map.get(c.id)
         v = res.verdict.value.upper() if res else "UNVERIFIED"
         conf = f"{res.confidence_score * 100:.0f}%" if res and res.confidence_score else "N/A"
-        lines.append(f"Claim #{idx} [Page {c.page_number or 1}] - {v} (Confidence: {conf})")
-        lines.append(f"Text: \"{c.original_text[:120]}...\"")
-        if res:
-            lines.append(f"Explanation: {res.explanation}")
+        sup_cnt = int(res.supporting_count) if res and res.supporting_count is not None else 0
+        contra_cnt = int(res.contradicting_count) if res and res.contradicting_count is not None else 0
+        neu_cnt = int(res.neutral_count) if res and res.neutral_count is not None else 0
+        # Matching square brackets for claim header, ensuring consistent [Page X] formatting
+        page_num = int(c.page_number) if c.page_number is not None else 1
+        header_line = f"Claim #{idx} [Page {page_num}] {v} (Confidence: {conf})"
+        header_line = re.sub(r"[\(\[]Page\s+(\d+)\)?", r"[Page \1]", header_line)
+        lines.append(header_line)
+        # Explicit evidence counts ensuring 0 counts format as '0 contradicting', never omitted
+        lines.append(f"Evidence: {sup_cnt} supporting, {contra_cnt} contradicting, {neu_cnt} neutral")
+
+        # Multi-line text wrapping for Text: and Explanation: fields
+        text_str = f'Text: "{c.original_text}"'
+        for wrapped_line in textwrap.wrap(text_str, width=80):
+            lines.append(wrapped_line)
+
+        if res and res.explanation:
+            expl_str = f"Explanation: {res.explanation}"
+            for wrapped_line in textwrap.wrap(expl_str, width=80):
+                lines.append(wrapped_line)
         lines.append("-" * 40)
 
-    # Convert text lines into valid PDF format
-    content_stream = "BT /F1 10 Tf 50 750 Td 12 TL\n"
-    for line in lines:
-        # Escape parenthesis in PDF strings
-        safe_line = line.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
-        content_stream += f"({safe_line}) '\n"
-    content_stream += "ET\n"
-
-    stream_bytes = content_stream.encode("latin-1", errors="replace")
-    stream_len = len(stream_bytes)
-
-    pdf_header = (
-        b"%PDF-1.4\n"
-        b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
-        b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n"
-        b"3 0 obj\n<< /Type /Page /Parent 2 0 R /Resources << /Font << /F1 4 0 R >> >> /MediaBox [0 0 612 792] /Contents 5 0 R >>\nendobj\n"
-        b"4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>\nendobj\n"
-    )
-    pdf_stream_header = f"5 0 obj\n<< /Length {stream_len} >>\nstream\n".encode("ascii")
-    pdf_footer = (
-        b"\nendstream\nendobj\n"
-        b"xref\n0 6\n"
-        b"0000000000 65535 f \n"
-        b"0000000009 00000 n \n"
-        b"0000000058 00000 n \n"
-        b"0000000115 00000 n \n"
-        b"0000000244 00000 n \n"
-        b"0000000325 00000 n \n"
-        b"trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n500\n%%EOF"
-    )
-    pdf_template = pdf_header + pdf_stream_header + stream_bytes + pdf_footer
-
-    return pdf_template
+    return _build_pdf_document(lines)
 
 
 def generate_verification_report(
@@ -194,11 +358,10 @@ def generate_verification_report(
         raise ValueError(f"Document {document_id} not found")
 
     version = db.execute(
-        select(DocumentVersion).where(
-            DocumentVersion.document_id == doc.id,
-            DocumentVersion.version_number == 1,
-        )
-    ).scalar_one_or_none()
+        select(DocumentVersion)
+        .where(DocumentVersion.document_id == doc.id)
+        .order_by(DocumentVersion.version_number.desc())
+    ).scalars().first()
     if version is None:
         raise ValueError(f"No version found for document {document_id}")
 

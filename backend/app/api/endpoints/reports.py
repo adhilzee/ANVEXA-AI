@@ -2,12 +2,17 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.api.dependencies import get_current_user, verify_resource_ownership
+from backend.app.api.dependencies import (
+    get_current_user,
+    oauth2_scheme,
+    verify_resource_ownership,
+)
 from backend.app.core.config import get_settings
+from backend.app.core.security import decode_access_token
 from backend.app.database.session import get_db
 from backend.app.models.document import Document
 from backend.app.models.user import User
@@ -70,9 +75,33 @@ def get_report(
 )
 def download_report(
     report_id: UUID,
-    current_user: User = Depends(get_current_user),
+    token: str | None = Query(default=None, description="Optional JWT token in query param"),
+    bearer_token: str | None = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
 ):
+    auth_token = bearer_token or token
+    if not auth_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    try:
+        payload = decode_access_token(auth_token)
+        user_id_str = payload.get("sub")
+        if not user_id_str:
+            raise ValueError("Missing sub claim")
+        current_user = db.get(User, UUID(user_id_str))
+        if current_user is None:
+            raise ValueError("User not found")
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
+
     report = db.get(Report, report_id)
     if report is None:
         raise HTTPException(status_code=404, detail="Report not found")
