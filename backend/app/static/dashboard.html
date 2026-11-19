@@ -576,28 +576,348 @@
       box-shadow: 0 6px 18px rgba(99, 102, 241, 0.5);
       transform: translateY(-1px);
     }
+    /* ==========================================================================
+       RESPONSIVE DESIGN ACROSS ALL FRAMES (MOBILE, TABLET, DESKTOP)
+       ========================================================================== */
+    html, body {
+      overflow-x: hidden;
+      width: 100%;
+      position: relative;
+      -webkit-text-size-adjust: 100%;
+      touch-action: manipulation;
+    }
+
+    .header-container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 0.5rem;
+      background: var(--card-bg);
+      padding: 0.35rem;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+      margin-bottom: 1.5rem;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .nav-tabs::-webkit-scrollbar {
+      display: none;
+    }
+    .tab-btn {
+      flex: 1;
+      white-space: nowrap;
+      min-width: fit-content;
+    }
+
+    .claim-item, .claim-text, .claim-explanation, .passage-snippet, .passage-source-title, .issue-alert {
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+
+    /* Tablet Landscape & Small Laptops (<= 1024px) */
+    @media (max-width: 1024px) {
+      header {
+        padding: 0.8rem 1.25rem;
+      }
+      main {
+        padding: 0 1.25rem;
+        margin: 1.25rem auto 2.5rem;
+      }
+      .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    /* Tablet Portrait (<= 768px) */
+    @media (max-width: 768px) {
+      header {
+        padding: 0.75rem 1rem;
+      }
+      .platform-title {
+        font-size: 0.95rem;
+      }
+      .nav-tabs {
+        gap: 0.35rem;
+        padding: 0.3rem;
+      }
+      .tab-btn {
+        flex: 0 0 auto;
+        font-size: 0.84rem;
+        padding: 0.55rem 0.85rem;
+      }
+      .hero h1 {
+        font-size: 1.75rem;
+      }
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+      }
+      .stat-card:nth-child(5) {
+        grid-column: span 2;
+      }
+    }
+
+    /* Mobile Phones (<= 640px) */
+    @media (max-width: 640px) {
+      header {
+        padding: 0.6rem 0.75rem;
+      }
+      .header-container {
+        gap: 0.4rem;
+      }
+      .logo-group {
+        gap: 0.4rem;
+      }
+      .logo-badge {
+        font-size: 0.9rem;
+        padding: 0.25rem 0.55rem;
+      }
+      .platform-title {
+        display: none !important; /* Hide lengthy title so header never wraps awkwardly on mobile */
+      }
+      .header-user {
+        gap: 0.35rem;
+      }
+      .engine-status-badge {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.72rem;
+      }
+      .engine-status-text {
+        display: none !important; /* Keep glowing dot clean on small screens */
+      }
+      .pwa-install-pill {
+        padding: 0.25rem 0.6rem;
+        font-size: 0.75rem;
+      }
+      #pwa-install-btn-text {
+        font-size: 0.75rem;
+      }
+      .team-badge {
+        padding: 0.25rem 0.55rem !important;
+        font-size: 0.75rem !important;
+      }
+      .team-badge-text {
+        display: none !important;
+      }
+
+      main {
+        padding: 0 0.75rem;
+        margin: 0.85rem auto 2rem;
+      }
+      .hero {
+        margin-bottom: 1.25rem;
+        text-align: left;
+      }
+      .hero h1 {
+        font-size: 1.4rem;
+        line-height: 1.25;
+      }
+      .hero p {
+        font-size: 0.85rem;
+        line-height: 1.4;
+      }
+
+      .card {
+        padding: 1rem 0.85rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+      }
+      .card h2 {
+        font-size: 1.05rem;
+      }
+      .upload-dropzone {
+        padding: 1.5rem 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .upload-dropzone div:nth-child(2) {
+        font-size: 0.95rem !important;
+      }
+      .upload-dropzone div:nth-child(3) {
+        font-size: 0.78rem !important;
+      }
+
+      /* Selected file preview mobile card */
+      .file-preview-card {
+        padding: 1rem 0.85rem;
+      }
+      .file-preview-inner {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.85rem !important;
+      }
+      .file-preview-actions {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        gap: 0.5rem;
+      }
+      .file-preview-actions .btn {
+        width: 100%;
+        justify-content: center;
+        min-height: 44px;
+      }
+
+      /* Sample papers mobile stacked view */
+      .sample-paper-item {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.65rem !important;
+      }
+      .sample-paper-item .btn-pill {
+        width: 100% !important;
+        min-height: 38px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 0.82rem !important;
+      }
+
+      /* Stats mobile layout */
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.5rem !important;
+        margin-bottom: 1rem !important;
+      }
+      .stat-card {
+        padding: 0.75rem 0.5rem !important;
+      }
+      .stat-value {
+        font-size: 1.4rem !important;
+      }
+      .stat-label {
+        font-size: 0.7rem !important;
+      }
+
+      /* Claim items & evidence grid */
+      .claim-item {
+        padding: 0.85rem 0.75rem;
+        margin-bottom: 0.85rem;
+      }
+      .claim-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.4rem;
+      }
+      .claim-text {
+        font-size: 0.92rem;
+        line-height: 1.45;
+      }
+      .claim-explanation {
+        font-size: 0.82rem;
+        padding: 0.6rem;
+      }
+
+      /* 2x2 Clean grid for evidence badges on mobile phones */
+      .evidence-badges-row {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.4rem !important;
+        width: 100% !important;
+        margin-top: 0.6rem !important;
+      }
+      .ev-badge-btn {
+        width: 100% !important;
+        justify-content: center !important;
+        min-height: 36px !important;
+        font-size: 0.74rem !important;
+        padding: 0.25rem 0.4rem !important;
+        text-align: center !important;
+      }
+
+      .evidence-drawer {
+        padding: 0.75rem 0.6rem;
+      }
+      .passage-card {
+        padding: 0.75rem 0.65rem;
+      }
+      .passage-meta {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.4rem !important;
+      }
+      .passage-source-title {
+        font-size: 0.84rem;
+      }
+      .passage-snippet {
+        font-size: 0.82rem;
+        padding: 0.5rem;
+      }
+      .passage-score-badge {
+        align-self: flex-start !important;
+      }
+
+      /* Reports tab buttons */
+      .reports-actions-row {
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 0.65rem !important;
+      }
+      .reports-actions-row .btn {
+        width: 100% !important;
+        min-height: 44px !important;
+        justify-content: center !important;
+      }
+
+      /* Modal card on small phones */
+      .pwa-modal-card {
+        max-width: 95vw;
+        width: 95vw;
+        border-radius: 14px;
+      }
+      .pwa-modal-header {
+        padding: 0.85rem 1rem;
+      }
+      .pwa-modal-header h3 {
+        font-size: 1.05rem;
+      }
+      .pwa-modal-body {
+        padding: 0.85rem 1rem;
+        max-height: 75vh;
+      }
+
+      footer {
+        margin-top: 2.5rem !important;
+        padding: 1.5rem 0.75rem !important;
+        font-size: 0.78rem !important;
+      }
+      footer a {
+        display: block;
+        margin: 0.35rem 0 !important;
+      }
+    }
   </style>
 </head>
 <body>
 
   <header>
-    <div class="logo-group">
-      <span class="logo-badge">ANVEXA</span>
-      <span class="platform-title">Academic Document Verification Platform</span>
-    </div>
-    <div class="header-user">
-      <span class="engine-status-badge">
-        <span class="status-dot"></span>
-        Verification Engine Online
-      </span>
-      <!-- PWA Install Button -->
-      <button id="pwa-install-btn" class="pwa-install-pill" onclick="triggerPwaInstall()" title="Install ANVEXA AI as an application on Android, iOS, or PC">
-        <span>📲</span>
-        <span id="pwa-install-btn-text">Install App</span>
-      </button>
-      <div style="display: inline-flex; align-items: center; gap: 0.45rem; background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.25)); border: 1px solid rgba(168, 85, 247, 0.45); padding: 0.35rem 0.85rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; color: #f1f5f9; box-shadow: 0 0 12px rgba(168, 85, 247, 0.25);">
-        <span style="color: #c084fc; font-size: 0.95rem;">✨</span>
-        <span>Code Nova</span>
+    <div class="header-container">
+      <div class="logo-group">
+        <span class="logo-badge">ANVEXA</span>
+        <span class="platform-title">Academic Document Verification Platform</span>
+      </div>
+      <div class="header-user">
+        <span class="engine-status-badge">
+          <span class="status-dot"></span>
+          <span class="engine-status-text">Verification Engine Online</span>
+        </span>
+        <!-- PWA Install Button -->
+        <button id="pwa-install-btn" class="pwa-install-pill" onclick="triggerPwaInstall()" title="Install ANVEXA AI as an application on Android, iOS, or PC">
+          <span>📲</span>
+          <span id="pwa-install-btn-text">Install App</span>
+        </button>
+        <div class="team-badge" style="display: inline-flex; align-items: center; gap: 0.45rem; background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.25)); border: 1px solid rgba(168, 85, 247, 0.45); padding: 0.35rem 0.85rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; color: #f1f5f9; box-shadow: 0 0 12px rgba(168, 85, 247, 0.25);">
+          <span style="color: #c084fc; font-size: 0.95rem;">✨</span>
+          <span class="team-badge-text">Code Nova</span>
+        </div>
       </div>
     </div>
   </header>
@@ -701,12 +1021,12 @@
 
         <!-- SELECTED FILE PREVIEW (Displayed once a file is chosen) -->
         <div id="selected-file-card" class="file-preview-card" style="display: none;">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div class="file-preview-inner" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
             <div style="display: flex; align-items: center; gap: 1rem;">
               <div id="selected-file-icon" style="font-size: 2.2rem;">📄</div>
               <div>
-                <div style="font-weight: 700; font-size: 1.1rem; color: #fff;" id="selected-filename">sample_paper.pdf</div>
-                <div style="font-size: 0.85rem; color: #94a3b8; display: flex; gap: 0.6rem; align-items: center; margin-top: 0.25rem;">
+                <div style="font-weight: 700; font-size: 1.1rem; color: #fff; word-break: break-all;" id="selected-filename">sample_paper.pdf</div>
+                <div style="font-size: 0.85rem; color: #94a3b8; display: flex; gap: 0.6rem; align-items: center; margin-top: 0.25rem; flex-wrap: wrap;">
                   <span id="selected-filesize">2.7 KB</span>
                   <span>•</span>
                   <span class="badge" id="selected-filetype" style="background: #334155; color: #a5b4fc;">PDF Document</span>
@@ -717,7 +1037,7 @@
                 </div>
               </div>
             </div>
-            <div style="display: flex; gap: 0.75rem; align-items: center;">
+            <div class="file-preview-actions" style="display: flex; gap: 0.75rem; align-items: center;">
               <button class="btn btn-secondary" style="padding: 0.5rem 0.9rem; font-size: 0.85rem;" onclick="clearSelectedFile()">
                 ✕ Choose Different File
               </button>
@@ -739,9 +1059,9 @@
 
           <div style="display: flex; flex-direction: column; gap: 0.75rem;">
             <!-- Sample 1 -->
-            <div style="display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid #334155; flex-wrap: wrap; gap: 0.5rem;">
+            <div class="sample-paper-item" style="display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid #334155; flex-wrap: wrap; gap: 0.5rem;">
               <div>
-                <span style="font-weight: 600; color: #fff;">sample_biomedical_verification_paper.pdf</span>
+                <span style="font-weight: 600; color: #fff; word-break: break-all;">sample_biomedical_verification_paper.pdf</span>
                 <span class="badge" style="background: #334155; color: #a5b4fc; margin-left: 0.5rem;">PDF (2.7 KB)</span>
                 <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
                   Tests numerical claim extraction (95%, 40%, p &lt; 0.001), <b>retracted Lancet paper alert</b> (10.1016/s0140-6736), and broken DOIs.
@@ -753,9 +1073,9 @@
             </div>
 
             <!-- Sample 2 -->
-            <div style="display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid #334155; flex-wrap: wrap; gap: 0.5rem;">
+            <div class="sample-paper-item" style="display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid #334155; flex-wrap: wrap; gap: 0.5rem;">
               <div>
-                <span style="font-weight: 600; color: #fff;">clinical_oncology_immunotherapy_trial.docx</span>
+                <span style="font-weight: 600; color: #fff; word-break: break-all;">clinical_oncology_immunotherapy_trial.docx</span>
                 <span class="badge" style="background: #1e3a5f; color: #93c5fd; margin-left: 0.5rem;">DOCX (1.7 KB)</span>
                 <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
                   Tests native <b>Word DOCX</b> parser, clinical oncology trial statistics, 5-year survival rates, and hazard ratios.
@@ -767,9 +1087,9 @@
             </div>
 
             <!-- Sample 3 -->
-            <div style="display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid #334155; flex-wrap: wrap; gap: 0.5rem;">
+            <div class="sample-paper-item" style="display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid #334155; flex-wrap: wrap; gap: 0.5rem;">
               <div>
-                <span style="font-weight: 600; color: #fff;">direct_air_carbon_capture_review.pdf</span>
+                <span style="font-weight: 600; color: #fff; word-break: break-all;">direct_air_carbon_capture_review.pdf</span>
                 <span class="badge" style="background: #334155; color: #a5b4fc; margin-left: 0.5rem;">PDF (1.8 KB)</span>
                 <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
                   Tests thermodynamic calculations, direct air capture energetic limits, and clean supported verdicts.
@@ -859,7 +1179,7 @@
           </div>
         </div>
 
-        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <div class="reports-actions-row" style="display: flex; gap: 1rem; flex-wrap: wrap;">
           <button class="btn btn-primary" onclick="downloadReport('pdf')">
             📑 Export PDF Verification Certificate
           </button>
