@@ -1,6 +1,6 @@
 """Launch script for ANVEXA AI Demo.
 
-Seeds the database with sample verified manuscript and starts the local web server.
+Seeds the database with sample verified manuscript and starts the web server.
 """
 
 from __future__ import annotations
@@ -20,9 +20,12 @@ if __name__ == "__main__":
     print("\n[1/2] Seeding demonstration data...")
     seed()
 
+    host = os.environ.get("HOST", "0.0.0.0")
+    port = int(os.environ.get("PORT", "8000"))
+
     print("\n[2/2] Starting ANVEXA AI Application Server...")
-    print("Web Dashboard: http://127.0.0.1:8000/")
-    print("API Documentation: http://127.0.0.1:8000/docs\n")
+    print(f"Web Dashboard: http://{host}:{port}/")
+    print(f"API Documentation: http://{host}:{port}/docs\n")
 
     import uvicorn
-    uvicorn.run("backend.app.main:app", host="127.0.0.1", port=8000, reload=False)
+    uvicorn.run("backend.app.main:app", host=host, port=port, reload=False)

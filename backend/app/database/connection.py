@@ -10,11 +10,13 @@ def create_database_engine(
     pool_size: int = 5,
     max_overflow: int = 10,
 ) -> Engine:
+    connect_args = {"check_same_thread": False} if database_url.startswith("sqlite") else {}
     return create_engine(
         database_url,
         pool_pre_ping=True,
         pool_size=pool_size,
         max_overflow=max_overflow,
+        connect_args=connect_args,
     )
 
 
