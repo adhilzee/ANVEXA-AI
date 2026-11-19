@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: anvexa-ai
+    runtime: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: python run_demo.py
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: ANVEXA_ENVIRONMENT
+        value: production
+      - key: ANVEXA_DATABASE_URL
+        value: sqlite:///./anvexa_demo.db
+      - key: ANVEXA_JWT_SECRET_KEY
+        generateValue: true
+      - key: ANVEXA_DOCUMENT_STORAGE_PATH
+        value: ./storage/documents
