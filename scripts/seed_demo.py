@@ -99,6 +99,7 @@ def seed():
 
         # 4. Create Document Record if not exists
         doc = db.query(Document).filter(Document.user_id == user.id, Document.file_hash == content_hash).first()
+        is_new_doc = False
         if not doc:
             doc = Document(
                 user_id=user.id,
@@ -113,21 +114,25 @@ def seed():
             db.add(doc)
             db.commit()
             db.refresh(doc)
+            is_new_doc = True
             print(f"[+] Created Manuscript Document ID: {doc.id}")
         else:
             print(f"[*] Found Existing Manuscript Document ID: {doc.id}")
 
-        # 5. Run Verification Pipeline
-        print("\n[*] Executing 6-Step Verification Pipeline...")
-        run_verification_pipeline(document_id=doc.id, user_id=user.id, db=db, storage=storage, settings=settings)
-        print("[+] Verification Pipeline Completed Successfully!")
+        # 5. Run Verification Pipeline only if new or uncompleted
+        if is_new_doc or doc.processing_status != DocumentStatus.COMPLETED:
+            print("\n[*] Executing 6-Step Verification Pipeline...")
+            run_verification_pipeline(document_id=doc.id, user_id=user.id, db=db, storage=storage, settings=settings)
+            print("[+] Verification Pipeline Completed Successfully!")
 
-        # 6. Generate PDF and CSV Reports
-        print("\n[*] Generating Audit Reports...")
-        csv_rep = generate_verification_report(doc.id, user.id, ReportFormat.CSV, db, storage, settings)
-        pdf_rep = generate_verification_report(doc.id, user.id, ReportFormat.PDF, db, storage, settings)
-        print(f"[+] Generated CSV Audit Report: {csv_rep.id}")
-        print(f"[+] Generated PDF Audit Certificate: {pdf_rep.id}")
+            # 6. Generate PDF and CSV Reports
+            print("\n[*] Generating Audit Reports...")
+            csv_rep = generate_verification_report(doc.id, user.id, ReportFormat.CSV, db, storage, settings)
+            pdf_rep = generate_verification_report(doc.id, user.id, ReportFormat.PDF, db, storage, settings)
+            print(f"[+] Generated CSV Audit Report: {csv_rep.id}")
+            print(f"[+] Generated PDF Audit Certificate: {pdf_rep.id}")
+        else:
+            print("[*] Manuscript is already verified and cached; skipping duplicate pipeline run.")
 
         print("\n" + "=" * 60)
         print("SEEDING COMPLETE!")

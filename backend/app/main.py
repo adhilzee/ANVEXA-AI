@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+import logging
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -10,6 +12,21 @@ from backend.app.core.config import Settings, get_settings
 from backend.app.core.logging import configure_logging
 from backend.app.services.document_service import DuplicateDocumentError
 
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Ensure database schema exists on application boot
+    try:
+        from backend.app.database.connection import get_engine
+        from backend.app.database.base import Base
+        import backend.app.models
+        Base.metadata.create_all(bind=get_engine())
+    except Exception as exc:
+        logger.warning("Database schema initialization warning: %s", exc)
+    yield
+
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     app_settings = settings or get_settings()
@@ -18,6 +35,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         title=app_settings.app_name,
         version=app_settings.app_version,
         description="Evidence-traceable academic document verification API.",
+        lifespan=lifespan,
     )
 
     @application.exception_handler(DuplicateDocumentError)
@@ -36,6 +54,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.add_middleware(
         CORSMiddleware,
         allow_origins=app_settings.cors_origins,
+        allow_origin_regex=r"^https?://.*",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
